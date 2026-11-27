@@ -122,6 +122,13 @@ tbody tr:hover{background:var(--surface-2)}
 .pc-set{display:flex;gap:4px;flex-wrap:wrap}
 .pc-td{white-space:normal!important;min-width:170px}
 .pe.crit{color:var(--crit);font-weight:600}
+.conf{font-size:12.5px;padding:8px 10px;border-radius:7px;background:var(--surface-2);color:var(--muted)}
+.conf.ok{background:var(--ok-bg);color:var(--s-ok)}
+.conf.warn{background:var(--warn-bg);color:var(--warn)}
+.chave-linha{display:flex;gap:10px;align-items:flex-start;padding:6px 0;border-top:1px dashed var(--line)}
+.chave-linha:first-of-type{border-top:0;padding-top:0}
+.chave-etapa{font-weight:600;font-size:13px;min-width:104px;color:var(--cor)}
+.chave-quem{display:flex;flex-wrap:wrap;gap:6px 14px;flex:1}
 .pe.warn{color:var(--warn);font-weight:600}
 .pc{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:1px 7px;border-radius:99px;border:1px solid var(--line);background:var(--surface-2);color:var(--muted);white-space:nowrap}
 .pc-ok{border-color:color-mix(in srgb,var(--s-ok) 45%,var(--line));color:var(--s-ok)}
@@ -526,7 +533,7 @@ function avisoModoDemo(){
 /* ---------- Estado ---------- */
 let db=null, user=null, meId=null, assets=null, sample=null, sampleImgs=false;
 let anexosPendentes={}, lendoNF=false, mcp=null, enviando=false, downloads=null;
-const selAnx={oco:{}, res:{}}; const PADRAO_ANX={oco:["nf","foto"], res:["nfnova","boleto","faturamento"]};
+const selAnx={oco:{}, res:{}}; const PADRAO_ANX={oco:["danfe","foto","nf"], res:["nfnova","boleto","faturamento"]};
 const ultimoRascunho={};
 const cacheNomes={};
 const PAINEL_URL="https://claude.ai/artifact/QUoHL3FzpfEDqwBEe2KEHW";
@@ -609,7 +616,7 @@ function aplicarRestricoes(){
 function podeAgir(k){
   if(!meId) return {ok:false, msg:"Não identifiquei seu usuário. Abra o painel pela sua conta da empresa."};
   if(!acessoPronto) return {ok:false, msg:"Verificando seu acesso ao painel… tente de novo em instantes."};
-  if(!meuAcesso.setores.includes(k)){
+  if(!meuAcesso.setores.includes(k) && !ehChave(k)){
     const meu = meuAcesso.setores.length ? meuAcesso.setores.map(x => ROTULO_SETOR[x]).join(" / ") : "somente leitura";
     return {ok:false, msg:`Esta etapa é do setor ${ROTULO_SETOR[k]}. Seu acesso é ${meu}.`};
   }
@@ -724,6 +731,14 @@ function fmtDur(ms){
   return min + " min";
 }
 
+function copiaEtapas(c){
+  const e = etapasDe(c), out = {};
+  for(const s of SECOES){
+    const r = e[s] || {};
+    out[s] = Object.assign({}, r, { passagens:(r.passagens || []).slice(), aguardando:r.aguardando ? Object.assign({}, r.aguardando) : null });
+  }
+  return out;
+}
 function abrirEtapa(e, s, agora, por){
   const r = e[s] || (e[s] = recShape(null));
   r.status = "ativa";
@@ -743,7 +758,7 @@ function baixarEtapa(e, s, agora){
   r.status = "pendente"; r.entradaEm = null; r.aguardando = null;
 }
 function transAvancar(c, agora){
-  const e = etapasDe(c); const at = etapaAtual(c);
+  const e = copiaEtapas(c); const at = etapaAtual(c);
   const i = SECOES.indexOf(at);
   if(i < 0) return null;
   fecharEtapa(e, at, agora);
@@ -752,7 +767,7 @@ function transAvancar(c, agora){
   return {mapa:mapaEtapas(e), etapa: prox || "concluido", etapaDesde:agora};
 }
 function transDevolver(c, alvo, agora){
-  const e = etapasDe(c); const at = etapaAtual(c);
+  const e = copiaEtapas(c); const at = etapaAtual(c);
   const iAt = SECOES.indexOf(at), iAlvo = SECOES.indexOf(alvo);
   if(iAt < 0 || iAlvo < 0 || iAlvo >= iAt) return null;
   for(let i = iAlvo; i <= iAt; i++) baixarEtapa(e, SECOES[i], agora);
@@ -762,21 +777,21 @@ function transDevolver(c, alvo, agora){
   return {mapa:mapaEtapas(e), etapa:alvo, etapaDesde:agora};
 }
 function transReabrir(c, alvo, agora){
-  const e = etapasDe(c); const iAlvo = SECOES.indexOf(alvo);
+  const e = copiaEtapas(c); const iAlvo = SECOES.indexOf(alvo);
   if(iAlvo < 0) return null;
   for(let i = iAlvo; i < SECOES.length; i++) baixarEtapa(e, SECOES[i], agora);
   abrirEtapa(e, alvo, agora, meId);
   return {mapa:mapaEtapas(e), etapa:alvo, etapaDesde:agora};
 }
 function transAguardar(c, motivo, agora){
-  const e = etapasDe(c); const at = etapaAtual(c); const r = e[at];
+  const e = copiaEtapas(c); const at = etapaAtual(c); const r = e[at];
   if(!r || (r.status !== "ativa" && r.status !== "aguardando")) return null;
   r.status = "aguardando";
   r.aguardando = {em:agora, motivo:motivo, por:meId};
   return {mapa:mapaEtapas(e), etapa:at, etapaDesde:r.entradaEm || r.iniciadoEm || agora};
 }
 function transRetomar(c, agora){
-  const e = etapasDe(c); const at = etapaAtual(c); const r = e[at];
+  const e = copiaEtapas(c); const at = etapaAtual(c); const r = e[at];
   if(!r || r.status !== "aguardando") return null;
   r.status = "ativa"; r.aguardando = null;
   return {mapa:mapaEtapas(e), etapa:at, etapaDesde:r.entradaEm || r.iniciadoEm || agora};
@@ -936,6 +951,11 @@ function situacaoDe(c){
 }
 /* ---------- Prazo por etapa (SLA) e gargalo ---------- */
 let prazos = {logistica:1, comercial:2, ocorrencia:2, processos:2};
+const CHAVE_VAZIA = () => ({logistica:[], comercial:[], ocorrencia:[], processos:[]});
+let chaveEtapas = CHAVE_VAZIA();
+function chaveDe(s){ const l = chaveEtapas[s]; return Array.isArray(l) ? l : []; }
+function ehChave(s){ return !!meId && chaveDe(s).indexOf(meId) >= 0; }
+function souChave(s){ return meuAcesso.gestor || ehChave(s); }
 function prazoDaEtapa(s){ const n = Number(prazos[s]); return isFinite(n) && n > 0 ? n : 0; }
 function vencimentoDe(c){
   if(!c || c.etapa === "concluido") return null;
@@ -1122,7 +1142,7 @@ function preencherSecao(sec,dados){
 }
 function validar(sec,d,c){ return CAMPOS[sec].filter(f=>f.k && (f.req||(f.reqSe&&f.reqSe(d,c))) && (f.t==="check"?!d[f.k]:(d[f.k]==null||d[f.k]===""))); }
 /* podeAgir agora vem de acessos/{uid} — ver bloco "Acessos por setor". */
-function temNFAnexa(){ return listaAnexos().some(a=>a.tipo==="nf"); }
+function temNFAnexa(){ return listaAnexos().some(a=>a.tipo==="nf"||a.tipo==="xml"||a.tipo==="danfe"); }
 function marcarErros(sec,faltando){
   document.querySelectorAll(`#sec-${sec} .c`).forEach(c=>c.classList.remove("erro"));
   faltando.forEach(f=>{ const c=document.querySelector(`#sec-${sec} .c[data-campo="${f.k}"]`); if(c) c.classList.add("erro"); });
@@ -1161,10 +1181,16 @@ function montarNovo(){
   anexosPendentes={}; ligarAnexos(); renderAnexos();
   $("#criar-rasc").onclick=()=>criarCaso(false);
   $("#criar-env").onclick=()=>criarCaso(true);
+  if(!souChave("logistica")){
+    const b=$("#criar-env"); if(b) b.hidden=true;
+    const box=document.querySelector("#sec-logistica .acoes");
+    if(box){ const n=document.createElement("span"); n.className="nota-setor"; n.textContent="Só o key user da Logística envia para o Comercial. Você pode salvar aqui."; box.insertBefore(n, box.firstChild); }
+  }
 }
 async function criarCaso(enviar){
   if(!db){ toast("Sem conexão com o banco do painel.",true); return; }
   if(!podeCriar()){ toast("Registrar devolução é do setor Logística. Seu acesso é " + (meuAcesso.setores.length ? meuAcesso.setores.map(k => ROTULO_SETOR[k]).join(" / ") : "somente leitura") + ".", true); return; }
+  if(enviar && !souChave("logistica")){ toast("Só o key user da Logística envia a devolução para o Comercial. Salve na Logística e peça a ele para concluir.", true); return; }
   const d=lerSecao("logistica");
   const falt=enviar?validar("logistica",d):CAMPOS.logistica.filter(f=>(f.k==="cliente"||f.k==="nf")&&!d[f.k]);
   marcarErros("logistica",falt);
@@ -1309,8 +1335,12 @@ function montarAcoes(s,c){
     const espera = ag
       ? `<span class="nota-setor">Aguardando: ${esc(ag.motivo||"")} · desde ${esc(fmtQuando(ag.em))}</span><button class="btn" type="button" data-a="retomar">Retomar</button>`
       : `<button class="btn" type="button" data-a="aguardar">Aguardando terceiros</button>`;
-    const esq = i>0 ? `<button class="btn" type="button" data-a="voltar">Devolver para…</button>` : "";
-    html = `${esq}<div class="dir">${espera}<button class="btn" type="button" data-a="salvar">Salvar rascunho</button><button class="btn pri" type="button" data-a="avancar">${s==="processos"?"Concluir e encerrar caso":"Concluir e enviar para "+esc(prox.nome)}</button></div>`;
+    const chave = souChave(s);
+    const esq = (i>0 && chave) ? `<button class="btn" type="button" data-a="voltar">Devolver para…</button>` : "";
+    const concluir = chave
+      ? `<button class="btn pri" type="button" data-a="avancar">${s==="processos"?"Concluir e encerrar caso":"Concluir e enviar para "+esc(prox.nome)}</button>`
+      : `<span class="nota-setor">Preenchimento liberado. Só o key user de ${esc(ET[s].nome)} conclui e envia.</span>`;
+    html = `${esq}<div class="dir">${espera}<button class="btn" type="button" data-a="salvar">Salvar rascunho</button>${concluir}</div>`;
   }
   if(s==="processos" && c.etapa==="concluido" && meuAcesso.gestor){
     html = `<select id="reabrir-em" aria-label="Reabrir em">${SECOES.map(k=>`<option value="${k}">${ET[k].nome}</option>`).join("")}</select><div class="dir"><button class="btn" type="button" data-a="reabrir">Reabrir caso</button></div>`;
@@ -1366,6 +1396,9 @@ function autorizarEscrita(c, patch, codigo){
     }
     if(c.etapa !== s) return "A etapa " + ROTULO_SETOR[s] + " não está aberta: o caso está em " + ROTULO_SETOR[c.etapa] + ".";
     const pa = podeAgir(s); if(!pa.ok) return pa.msg;
+  }
+  if(codigo === "avancar" || codigo === "devolver"){
+    if(!souChave(c.etapa)) return "Só o key user de " + ROTULO_SETOR[c.etapa] + " conclui ou devolve esta etapa.";
   }
   if(patch.etapas){
     if(["avancar","devolver","reabrir","aguardar"].indexOf(codigo) < 0) return "Mudança de andamento só pelo fluxo do processo.";
@@ -1573,25 +1606,27 @@ async function enviarComentario(){
 
 /* ---------- Anexos: nota fiscal e fotos ---------- */
 const TIPOS_PROC=new Set(["nfnova","boleto","faturamento"]);
-function rotuloAnexo(t){ return t==="foto"?"Foto":t==="nfnova"?"Nova NF":t==="boleto"?"Boleto":t==="faturamento"?"Nova NF / boleto":"NF devolvida"; }
+function rotuloAnexo(t){ return t==="foto"?"Foto":t==="xml"?"XML da NF-e":t==="danfe"?"DANFE (consulta)":t==="nfnova"?"Nova NF":t==="boleto"?"Boleto":t==="faturamento"?"Nova NF / boleto":"NF devolvida"; }
 function blocoAnexosHTML(){
   return `<div class="bloco" id="anexos"><h3>Nota fiscal e fotos</h3>
     <div class="anx-botoes">
-      <button class="btn pri" type="button" id="bt-nf">Anexar nota fiscal</button><input type="file" id="up-nf" accept=".xml,.pdf,application/pdf,text/xml,application/xml,image/jpeg,image/png,image/webp" hidden>
+      <button class="btn pri" type="button" id="bt-xml">Anexar XML (preenche)</button><input type="file" id="up-xml" accept=".xml,text/xml,application/xml" hidden>
+      <button class="btn" type="button" id="bt-danfe">Anexar DANFE (PDF)</button><input type="file" id="up-danfe" accept=".pdf,application/pdf,image/jpeg,image/png,image/webp" hidden>
       <button class="btn" type="button" id="bt-foto">Adicionar fotos</button><input type="file" id="up-foto" accept="image/jpeg,image/png,image/webp" multiple hidden>
-      <span class="anx-dica">Só a Logística anexa, durante a etapa dela. XML da NF-e preenche os dados na hora. PDF ou foto da DANFE: o Claude lê e preenche (confira antes de salvar).</span>
+      <span class="anx-dica">Só a Logística anexa, durante a etapa dela. O XML da NF-e preenche os campos na hora, sem IA. O DANFE (PDF ou foto) fica guardado para consulta e download e não altera os dados.</span>
     </div>
     <div class="anx-status" id="anx-status" hidden></div>
     <div class="anx-docs" id="anx-docs"></div>
     <div class="anx-fotos" id="anx-fotos"></div>
+    <div class="conf" id="conferencia" hidden></div>
   </div>`;
 }
 function ligarAnexos(){
-  $("#bt-nf").onclick=()=>$("#up-nf").click();
-  $("#bt-foto").onclick=()=>$("#up-foto").click();
-  $("#up-nf").onchange=e=>{ const f=e.target.files[0]; e.target.value=""; if(f) onNF(f); };
-  $("#up-foto").onchange=e=>{ const fs=[...e.target.files]; e.target.value=""; if(fs.length) onFotos(fs); };
-  $("#anexos").addEventListener("click",ev=>{ const b=ev.target.closest("button[data-rm]"); if(b) removerAnexo(b.dataset.rm); });
+  const bx=$("#bt-xml"), ux=$("#up-xml"), bd=$("#bt-danfe"), ud=$("#up-danfe"), bf=$("#bt-foto"), uf=$("#up-foto");
+  if(bx && ux){ bx.onclick=()=>ux.click(); ux.onchange=e=>{ const f=e.target.files[0]; e.target.value=""; if(f) importarXML(f); }; }
+  if(bd && ud){ bd.onclick=()=>ud.click(); ud.onchange=e=>{ const f=e.target.files[0]; e.target.value=""; if(f) anexarDANFE(f); }; }
+  if(bf && uf){ bf.onclick=()=>uf.click(); uf.onchange=e=>{ const fs=[...e.target.files]; e.target.value=""; if(fs.length) onFotos(fs); }; }
+  $("#anexos").onclick=ev=>{ const b=ev.target.closest("button[data-rm]"); if(b) removerAnexo(b.dataset.rm); };
 }
 function listaAnexos(){
   const src = aberto==="__novo__" ? anexosPendentes : ((casos.get(aberto)||{}).anexos||{});
@@ -1603,11 +1638,19 @@ function renderAnexos(){
   const etapaAtual = aberto==="__novo__" ? "logistica" : ((casos.get(aberto)||{}).etapa);
   const pode = k => etapaAtual===k && setor===k;
   const podeLog = pode("logistica") && !!assets;
-  const bn=$("#bt-nf"), bfo=$("#bt-foto"); if(bn) bn.disabled=!podeLog; if(bfo) bfo.disabled=!podeLog;
+  const bx=$("#bt-xml"), bd=$("#bt-danfe"), bfo=$("#bt-foto");
+  if(bx) bx.disabled=!podeLog; if(bd) bd.disabled=!podeLog; if(bfo) bfo.disabled=!podeLog;
   const rmOk = a => pode(TIPOS_PROC.has(a.tipo)?"processos":"logistica");
   box.innerHTML=docs.map(a=>`<div class="anx-doc"><span class="tp">${esc(rotuloAnexo(a.tipo).toUpperCase())}</span><a href="/_blob/${esc(a.id)}" target="_blank" rel="noopener">${esc(a.nome||"Nota fiscal")}</a><span class="q">${pessoa(a.por)} · ${esc(fmtQuando(a.em))}</span>${rmOk(a)?`<button class="rm" type="button" data-rm="${esc(a.k)}" aria-label="Remover anexo">×</button>`:""}</div>`).join("");
   $("#anx-fotos").innerHTML=fotos.map(a=>`<div class="anx-foto"><a href="/_blob/${esc(a.id)}" target="_blank" rel="noopener" title="${esc(a.nome||"Foto")}"><img src="/_blob/${esc(a.id)}" alt="Foto da devolução" loading="lazy"></a>${rmOk(a)?`<button class="rm" type="button" data-rm="${esc(a.k)}" aria-label="Remover foto">×</button>`:""}</div>`).join("");
-  if(!l.length && !assets) box.innerHTML='<div class="vazio">Seu acesso não permite guardar anexos neste painel. A leitura da NF continua funcionando para preencher os campos.</div>';
+  if(!l.length && !assets) box.innerHTML='<div class="vazio">Seu acesso não permite guardar anexos neste painel. A leitura do XML continua funcionando para preencher os campos.</div>';
+  const cf=$("#conferencia");
+  if(cf){
+    const L=(($("#sec-logistica") ? lerSecao("logistica") : null) || ((casos.get(aberto)||{}).logistica) || {});
+    const conf=conferenciaDe(l, L);
+    if(!conf){ cf.hidden=true; cf.className="conf"; cf.textContent=""; }
+    else { cf.hidden=false; cf.className="conf " + conf.cls; cf.textContent=conf.txt; }
+  }
   resolverNomes($("#anexos"));
   renderEscolhaAnexos();
 }
@@ -1692,49 +1735,68 @@ function carregarPdfJs(){
   if(!pdfjsPronto) pdfjsPronto=(async()=>{ const base="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/"; await carregarScript(base+"pdf.min.js"); await carregarScript(base+"pdf.worker.min.js"); window.pdfjsLib.GlobalWorkerOptions.workerSrc=base+"pdf.worker.min.js"; })();
   return pdfjsPronto;
 }
-async function lerPdfNF(file){
-  await carregarPdfJs();
-  const pdf=await window.pdfjsLib.getDocument({data:await file.arrayBuffer(), isEvalSupported:false}).promise;
-  let txt="";
-  for(let i=1;i<=Math.min(pdf.numPages,3);i++){ const pg=await pdf.getPage(i); const tc=await pg.getTextContent(); txt+=tc.items.map(it=>it.str+(it.hasEOL?"\n":" ")).join("")+"\n"; }
-  if(txt.replace(/\s/g,"").length>200) return await sample.json(PROMPT_NF+"\n\nTexto extraído do PDF da nota:\n\n"+txt.slice(0,40000));
-  if(!sampleImgs) throw {code:"images_unavailable"};
-  const pg=await pdf.getPage(1); const vp=pg.getViewport({scale:2}); const cv=document.createElement("canvas"); cv.width=vp.width; cv.height=vp.height;
-  await pg.render({canvasContext:cv.getContext("2d"), viewport:vp}).promise;
-  const blob=await new Promise(r=>cv.toBlob(r,"image/png"));
-  return await sample.json(PROMPT_NF+"\n\nA imagem anexa é a primeira página da nota.", {images:[blob]});
-}
-async function lerImagemNF(file){
-  if(!sampleImgs) throw {code:"images_unavailable"};
-  return await sample.json(PROMPT_NF+"\n\nA imagem anexa é uma foto da nota (DANFE).", {images:[file]});
-}
-const MSG_LEITURA={not_granted:"A leitura automática não foi autorizada. Preencha os campos manualmente.",sampling_disabled:"A leitura automática não está disponível para sua conta.",rate_limited:"Muitas leituras seguidas. Tente de novo em alguns minutos.",image_rejected:"Não consegui abrir a imagem. Use JPG ou PNG.",images_unavailable:"A leitura de foto não está disponível aqui. Anexe o XML ou o PDF da NF.",xml_invalido:"O arquivo XML não parece ser uma NF-e válida.",pdf_lib:"Não foi possível abrir o leitor de PDF. Tente de novo.",sem_leitor:"Leitura automática indisponível. Anexe o XML da NF-e ou preencha manualmente."};
-async function onNF(file, alvo){
-  alvo=alvo||"logistica";
-  if(lendoNF) return;
-  if(alvo==="processos"){ if(!etapaLiberada("processos")) return; }
-  else if(setor!=="logistica"){ toast("Só a Logística anexa a nota fiscal da devolução.",true); return; }
-  lendoNF=true;
-  const nome=file.name||"nota";
-  const ehXml=/\.xml$/i.test(nome)||/xml/.test(file.type), ehPdf=/\.pdf$/i.test(nome)||file.type==="application/pdf", ehImg=/^image\//.test(file.type);
-  statusAnx(ehXml?"Lendo o XML da NF-e…":"O Claude está lendo a nota. Isso leva alguns segundos…","lendo",alvo);
-  const envio=subirArquivo(file, alvo==="processos"?"nfnova":"nf");
-  let dados=null, erro=null;
-  try{
-    if(ehXml) dados=lerXmlNFe(await file.text());
-    else if(!sample) throw {code:"sem_leitor"};
-    else if(ehPdf) dados=await lerPdfNF(file);
-    else if(ehImg) dados=await lerImagemNF(file);
-    else throw {code:"image_rejected"};
-  }catch(e){ erro=MSG_LEITURA[e&&e.code]||"Não consegui ler os dados desta nota. Confira o arquivo ou preencha manualmente."; }
-  const a=await envio; if(a && $("#anexos")) await registrarAnexo(a);
-  lendoNF=false;
-  if(!$("#sec-"+alvo)) return; // ficha fechada no meio da leitura
-  if(dados && typeof dados==="object"){
-    if(alvo==="processos"){ const r=aplicarNFProcessos(dados); statusAnx(r.n?`${r.n} campos preenchidos a partir da nova NF (em verde). Confira e clique em Salvar rascunho ou Concluir.${r.aviso?" ATENÇÃO: "+r.aviso:""}`:"Não encontrei dados na nota. Preencha manualmente.", r.n&&!r.aviso?"ok":"erro", alvo); }
-    else { const n=aplicarDadosNF(dados); statusAnx(n?`${n} campos preenchidos a partir da NF (em verde). Confira e clique em ${aberto==="__novo__"?"Registrar":"Salvar"}.`:"Não encontrei dados na nota. Preencha manualmente.", n?"ok":"erro"); }
+/* Leitura do XML (fonte dos dados) e anexo do DANFE (consulta) */
+function soDigitos(v){ return String(v == null ? "" : v).replace(/[^0-9]/g, ""); }
+function conferenciaDe(lista, L){
+  const xml = lista.filter(a => a.tipo === "xml" && a.meta).sort((a,b) => String(b.em).localeCompare(String(a.em)))[0];
+  const danfe = lista.filter(a => a.tipo === "danfe").sort((a,b) => String(b.em).localeCompare(String(a.em)))[0];
+  if(!xml && !danfe) return null;
+  L = L || {};
+  const linhas = []; let cls = "warn";
+  if(xml){
+    const m = xml.meta || {}, dif = [];
+    if(m.nf && L.nf && String(m.nf) !== String(L.nf)) dif.push("número da NF");
+    if(m.serie && L.serie && String(m.serie) !== String(L.serie)) dif.push("série");
+    if(m.chave && L.chave && soDigitos(m.chave) !== soDigitos(L.chave)) dif.push("chave de acesso");
+    if(m.cnpj && L.cnpjCliente && soDigitos(m.cnpj) !== soDigitos(L.cnpjCliente)) dif.push("CNPJ/CPF");
+    if(m.valorNf != null && typeof L.valorNf === "number" && Math.abs(m.valorNf - L.valorNf) > 0.01) dif.push("valor da NF");
+    if(dif.length){ cls = "warn"; linhas.push("XML lido, mas a ficha difere em: " + dif.join(", ") + "."); }
+    else { cls = "ok"; linhas.push("Dados da ficha conferem com o XML da NF-e."); }
+  } else {
+    linhas.push("Sem XML: os dados foram preenchidos manualmente — o DANFE serve de referência.");
   }
-  else statusAnx(erro+(a?" O arquivo ficou anexado.":""),"erro",alvo);
+  if(danfe){
+    const nums = (String(danfe.nome || "").match(/[0-9]{3,}/g) || []);
+    if(L.nf && nums.length && nums.indexOf(String(L.nf)) < 0) linhas.push("O nome do DANFE cita " + nums.join("/") + ", mas a ficha está na NF " + L.nf + ".");
+    else linhas.push("DANFE anexado para consulta e download.");
+  }
+  return {cls:cls, txt:linhas.join(" ")};
+}
+async function importarXML(file, alvo){
+  alvo = alvo || "logistica";
+  if(lendoNF) return;
+  if(alvo === "processos"){ if(!etapaLiberada("processos")) return; }
+  else if(setor !== "logistica"){ toast("Só a Logística anexa a nota fiscal da devolução.", true); return; }
+  if(!assets){ toast("Seu acesso não permite guardar arquivos.", true); return; }
+  let dados = null;
+  try{ dados = lerXmlNFe(await file.text()); }
+  catch(e){ toast("O arquivo XML não parece ser uma NF-e válida.", true); return; }
+  lendoNF = true;
+  statusAnx("Lendo o XML da NF-e…", "lendo", alvo);
+  const a = await subirArquivo(file, alvo === "processos" ? "nfnova" : "xml");
+  if(a){
+    a.meta = {nf:soDigitos(dados.nf), serie:String(dados.serie || ""), chave:soDigitos(dados.chave), cnpj:soDigitos(dados.cnpjCpf), valorNf:(typeof dados.valorTotal === "number" ? dados.valorTotal : null)};
+    await registrarAnexo(a);
+  }
+  lendoNF = false;
+  if(!$("#sec-" + alvo)) return;
+  if(alvo === "processos"){
+    const r = aplicarNFProcessos(dados);
+    statusAnx(r.n ? (r.n + " campos preenchidos do XML da nova NF. Confira e salve.") : "Não encontrei dados na nota.", r.n && !r.aviso ? "ok" : "erro", alvo);
+  } else {
+    const n = aplicarDadosNF(dados);
+    statusAnx(n ? (n + " campos preenchidos do XML (sem IA). Confira e clique em " + (aberto === "__novo__" ? "Registrar" : "Salvar") + ".") : "Não encontrei dados na nota.", n ? "ok" : "erro");
+  }
+}
+async function anexarDANFE(file){
+  if(setor !== "logistica"){ toast("Só a Logística anexa a nota fiscal da devolução.", true); return; }
+  const etapaAtual = aberto === "__novo__" ? "logistica" : ((casos.get(aberto) || {}).etapa);
+  if(etapaAtual !== "logistica"){ toast("A nota da devolução só pode ser anexada na etapa Logística.", true); return; }
+  if(!assets){ toast("Seu acesso não permite guardar arquivos.", true); return; }
+  statusAnx("Enviando o DANFE…", "lendo");
+  const a = await subirArquivo(file, "danfe");
+  if(a){ await registrarAnexo(a); statusAnx("DANFE anexado para consulta e download. Ele não altera os dados da ficha.", "ok"); }
+  else statusAnx("", "");
 }
 function aplicarDadosNF(d){
   const s=v=>v==null?"":String(v).trim();
@@ -2132,9 +2194,23 @@ async function salvarPrazos(){
     novos[s] = isFinite(v) && v > 0 ? v : 0;
   }
   try{
-    await db.doc("config/painel").set({prazos:novos, em:agoraISO(), por:meId});
+    await db.doc("config/painel").set({prazos:novos, chave:chaveEtapas, em:agoraISO(), por:meId});
     for(const s of SECOES) prazos[s] = novos[s];
     toast("Prazos atualizados.");
+  }catch(e){ tratarErro(e); }
+}
+async function salvarChave(etapa, uid, marcado){
+  if(!meuAcesso.gestor){ toast("Só gestores definem key users.", true); return; }
+  const atual = chaveDe(etapa).slice();
+  const i = atual.indexOf(uid);
+  if(marcado && i < 0) atual.push(uid);
+  if(!marcado && i >= 0) atual.splice(i, 1);
+  const novo = Object.assign({}, chaveEtapas);
+  novo[etapa] = atual;
+  try{
+    await db.doc("config/painel").set({prazos:prazos, chave:novo, em:agoraISO(), por:meId});
+    chaveEtapas = novo;
+    toast("Key user de " + ROTULO_SETOR[etapa] + " atualizado.");
   }catch(e){ tratarErro(e); }
 }
 function montarAcessos(){
@@ -2183,6 +2259,10 @@ function montarAcessos(){
       </div>
       <div class="aviso-fut">O prazo conta a partir da entrada atual na etapa. Zero desliga o prazo da etapa.</div>
     </div>
+    <div class="bloco"><h3>Key user por etapa</h3>
+      ${SECOES.map(s => `<div class="chave-linha" style="--cor:${ET[s].cor}"><div class="chave-etapa">${ET[s].nome}${chaveDe(s).length ? "" : `<span class="pill warn">vazio</span>`}</div><div class="chave-quem">${todos.length ? todos.map(([uid,d]) => `<label class="chk-mini"><input type="checkbox" data-chave="${s}" data-alvo="${esc(uid)}"${chaveDe(s).indexOf(uid) >= 0 ? " checked" : ""}> ${esc(d.nome || uid)}</label>`).join("") : `<span class="pe">Ninguém cadastrado ainda.</span>`}</div></div>`).join("")}
+      <div class="aviso-fut">Key user preenche e conclui a própria etapa; quem não é key user apenas preenche. Gestor conclui em qualquer etapa. Em Processos pode marcar mais de um.</div>
+    </div>
   </div>`;
   resolverNomes($("#ficha"));
   const pz=$("#pz-ok"); if(pz) pz.onclick=salvarPrazos;
@@ -2194,6 +2274,8 @@ function montarAcessos(){
     salvarAcesso(uid, {nome:"", setores:[], papel:"membro", status:"pendente"}, "Usuário pré-cadastrado por id");
   };
   $("#ficha").onchange=ev=>{
+    const ck=ev.target.closest("input[data-chave]");
+    if(ck){ salvarChave(ck.dataset.chave, ck.dataset.alvo, ck.checked); return; }
     const cb=ev.target.closest("input[data-acao]"); if(!cb) return;
     const uid=cb.dataset.alvo, d=acessos.get(uid)||{};
     if(cb.dataset.acao==="setor"){
@@ -2257,9 +2339,10 @@ render();
   }catch(e){ acessoPronto=true; calcularAcesso(); }
   try{
     db.collection("config").onSnapshot(snap=>{
-      const d = snap.docs.filter(x => x.id === "painel")[0];
-      const p = d && d.data() ? d.data().prazos : null;
-      if(p){ for(const s of SECOES){ const n = Number(p[s]); if(isFinite(n)) prazos[s] = n; } }
+      const doc = snap.docs.filter(x => x.id === "painel")[0];
+      const d = doc && doc.data() ? doc.data() : null;
+      if(d && d.prazos){ for(const s of SECOES){ const n = Number(d.prazos[s]); if(isFinite(n)) prazos[s] = n; } }
+      if(d && d.chave){ for(const s of SECOES){ const l = d.chave[s]; chaveEtapas[s] = Array.isArray(l) ? l.slice() : []; } }
       if(carregado) render();
       if(aberto && $("#f-cab")) atualizarFicha(false);
     }, ()=>{});
