@@ -1,0 +1,2284 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Devoluções e Refaturas da Filial (Copy)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Layout: faixa de resumo no topo, quadro em 5 colunas (uma por setor, na ordem do processo), ficha lateral do caso. */
+:root{
+  --bg:#eef1f5; --surface:#ffffff; --surface-2:#f6f8fa; --ink:#15202c; --muted:#5a6778; --line:#d6dde6;
+  --accent:#1f4fd1; --accent-ink:#ffffff;
+  --s-log:#b25a06; --s-com:#1f4fd1; --s-oco:#c0183f; --s-pro:#6b2fd6; --s-ok:#177a3c;
+  --warn:#a85d00; --warn-bg:#fff1d6; --crit:#b3122f; --crit-bg:#ffe1e6; --ok-bg:#dff5e6;
+  --shadow:0 1px 2px rgba(20,32,44,.06),0 2px 8px rgba(20,32,44,.05);
+  --display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+  --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f141b; --surface:#171e27; --surface-2:#1d2631; --ink:#e7edf4; --muted:#97a4b5; --line:#2b3644;
+    --accent:#6e94ff; --accent-ink:#0c1320;
+    --s-log:#f0a04b; --s-com:#7d9dff; --s-oco:#ff6b8a; --s-pro:#b28cff; --s-ok:#4fd187;
+    --warn:#f5b453; --warn-bg:#3a2a10; --crit:#ff7a93; --crit-bg:#3d1520; --ok-bg:#15301f;
+    --shadow:0 1px 2px rgba(0,0,0,.3);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f141b; --surface:#171e27; --surface-2:#1d2631; --ink:#e7edf4; --muted:#97a4b5; --line:#2b3644;
+  --accent:#6e94ff; --accent-ink:#0c1320;
+  --s-log:#f0a04b; --s-com:#7d9dff; --s-oco:#ff6b8a; --s-pro:#b28cff; --s-ok:#4fd187;
+  --warn:#f5b453; --warn-bg:#3a2a10; --crit:#ff7a93; --crit-bg:#3d1520; --ok-bg:#15301f;
+  --shadow:0 1px 2px rgba(0,0,0,.3);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font:14px/1.45 var(--body);display:flex;flex-direction:column}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.num{font-variant-numeric:tabular-nums}
+
+/* Topo */
+header.topo{display:flex;flex-wrap:wrap;align-items:center;gap:12px 20px;padding:14px 20px;background:var(--surface);border-bottom:1px solid var(--line)}
+.marca{display:flex;flex-direction:column;gap:0;min-width:0}
+.marca h1{font:700 24px/1.05 var(--display);letter-spacing:.01em;margin:0;text-wrap:balance}
+.marca small{color:var(--muted);font-size:12px}
+.vivo{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);padding:3px 9px;border:1px solid var(--line);border-radius:99px;white-space:nowrap}
+.vivo i{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.vivo.on i{background:var(--s-ok);box-shadow:0 0 0 3px color-mix(in srgb,var(--s-ok) 25%,transparent)}
+.vivo.erro i{background:var(--crit)}
+.espaco{flex:1}
+.campo-topo{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
+.filtros{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.acomp-topo{font-size:12px;color:var(--muted);margin-bottom:8px}
+.campo-topo select,.busca{background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:7px 10px;color:var(--ink)}
+.busca{width:min(280px,100%)}
+.eu{font-size:13px;color:var(--muted);white-space:nowrap}
+.eu b{color:var(--ink);font-weight:600}
+
+/* Resumo */
+.resumo{display:flex;flex-wrap:wrap;gap:10px;padding:14px 20px 0}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 14px;min-width:136px;flex:1 1 136px}
+.kpi span{display:block;font-size:12px;color:var(--muted)}
+.kpi b{font:700 26px/1.1 var(--display);font-variant-numeric:tabular-nums}
+.kpi.alerta b{color:var(--crit)}
+.barra{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:12px 20px}
+.abas{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--surface)}
+.abas button{border:0;background:none;padding:7px 14px;cursor:pointer;color:var(--muted)}
+.abas button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:7px 12px;cursor:pointer;font-weight:500;white-space:nowrap}
+.btn:hover{border-color:var(--muted)}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.pri:hover{filter:brightness(1.08)}
+.btn.perigo{color:var(--crit)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn.peq{padding:4px 9px;font-size:12px}
+
+/* Quadro */
+main{flex:1;min-height:0;display:flex;flex-direction:column}
+.quadro{flex:1;min-height:0;display:grid;grid-template-columns:repeat(4,minmax(250px,1fr));gap:12px;padding:0 20px 20px;overflow-x:auto}
+.coluna{display:flex;flex-direction:column;min-height:0;min-width:0;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;border-top:4px solid var(--cor)}
+.coluna.minha{box-shadow:0 0 0 2px var(--cor)}
+.col-cab{padding:10px 12px 8px;display:flex;flex-direction:column;gap:2px;border-bottom:1px solid var(--line)}
+.col-cab .l1{display:flex;align-items:center;gap:8px}
+.col-cab h2{font:700 19px/1.1 var(--display);margin:0;color:var(--cor);letter-spacing:.02em;text-transform:uppercase}
+.col-cab .qtd{margin-left:auto;font:600 13px var(--body);background:var(--surface);border:1px solid var(--line);border-radius:99px;padding:1px 9px;font-variant-numeric:tabular-nums}
+.col-cab p{margin:0;font-size:12px;color:var(--muted)}
+.tag-fila{font-size:11px;font-weight:600;color:var(--cor);border:1px solid var(--cor);border-radius:99px;padding:0 7px}
+.col-corpo{flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:8px;min-height:120px}
+.vazio{color:var(--muted);font-size:12px;text-align:center;padding:18px 6px}
+.cartao{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--cor);border-radius:8px;padding:9px 10px;cursor:pointer;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:5px;text-align:left;width:100%}
+.cartao:hover{border-color:var(--muted);border-left-color:var(--cor)}
+.cartao .l1{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.cartao .cod{font:500 12px var(--mono);color:var(--muted)}
+.cartao .cli{font-weight:600;font-size:14px;line-height:1.25;overflow-wrap:anywhere}
+.cartao .meta{font-size:12px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 10px}
+.cartao .meta b{color:var(--ink);font-weight:500}
+.cartao .rod{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);flex-wrap:wrap}
+.pill{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;border-radius:99px;padding:1px 8px;background:var(--surface-2);border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.pill.warn{background:var(--warn-bg);color:var(--warn);border-color:transparent}
+.pill.crit{background:var(--crit-bg);color:var(--crit);border-color:transparent}
+.pill.ok{background:var(--ok-bg);color:var(--s-ok);border-color:transparent}
+.pill.ex{border-style:dashed}
+.motivo{font-size:11px;font-weight:500;padding:1px 7px;border-radius:4px;background:color-mix(in srgb,var(--s-log) 13%,transparent);color:var(--s-log)}
+
+/* Lista */
+.lista-wrap{flex:1;min-height:0;overflow:auto;padding:0 20px 20px}
+table{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden;font-size:13px}
+th,td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap;font-variant-numeric:tabular-nums}
+th{font-weight:600;color:var(--muted);font-size:12px;background:var(--surface-2);position:sticky;top:0}
+tbody tr{cursor:pointer}
+tbody tr:hover{background:var(--surface-2)}
+.etq{display:inline-block;font-size:11px;font-weight:600;padding:1px 8px;border-radius:99px;color:var(--cor);border:1px solid var(--cor)}
+.pc-set{display:flex;gap:4px;flex-wrap:wrap}
+.pc-td{white-space:normal!important;min-width:170px}
+.pe.crit{color:var(--crit);font-weight:600}
+.pe.warn{color:var(--warn);font-weight:600}
+.pc{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:1px 7px;border-radius:99px;border:1px solid var(--line);background:var(--surface-2);color:var(--muted);white-space:nowrap}
+.pc-ok{border-color:color-mix(in srgb,var(--s-ok) 45%,var(--line));color:var(--s-ok)}
+.pc-at{border-color:var(--accent);color:var(--accent);font-weight:600}
+.pc-agu{border-color:var(--warn);color:var(--warn);font-weight:600}
+.pc-pen{opacity:.55}
+
+/* Ficha lateral */
+.veu{position:fixed;inset:0;background:rgba(10,16,24,.38);z-index:20;display:none}
+.veu.on{display:block}
+aside.ficha{position:fixed;top:0;right:0;bottom:0;width:min(720px,100%);background:var(--bg);z-index:21;display:none;flex-direction:column;border-left:1px solid var(--line);box-shadow:-8px 0 24px rgba(0,0,0,.12)}
+aside.ficha.on{display:flex}
+.f-cab{background:var(--surface);border-bottom:1px solid var(--line);padding:14px 18px;display:flex;flex-direction:column;gap:10px}
+.f-cab .l1{display:flex;align-items:flex-start;gap:12px}
+.f-cab h2{font:700 24px/1.1 var(--display);margin:0;overflow-wrap:anywhere}
+.f-cab .sub{font-size:12px;color:var(--muted)}
+.fechar{margin-left:auto;border:1px solid var(--line);background:var(--surface);border-radius:8px;width:34px;height:34px;cursor:pointer;font-size:18px;line-height:1;flex:none}
+.trilha{display:grid;grid-template-columns:repeat(5,1fr);gap:4px}
+.trilha div{font-size:11px;font-weight:600;text-align:center;padding:5px 2px 0;border-top:4px solid var(--line);color:var(--muted)}
+.trilha div.feito{border-top-color:var(--cor);color:var(--ink)}
+.trilha div.atual{border-top-color:var(--cor);color:var(--cor)}
+.f-corpo{flex:1;overflow-y:auto;padding:14px 18px 30px;display:flex;flex-direction:column;gap:12px}
+details.secao{background:var(--surface);border:1px solid var(--line);border-radius:10px;border-left:4px solid var(--cor)}
+details.secao.atual{box-shadow:0 0 0 2px color-mix(in srgb,var(--cor) 45%,transparent)}
+details.secao>summary{list-style:none;cursor:pointer;padding:11px 14px;display:flex;align-items:center;gap:10px}
+details.secao>summary::-webkit-details-marker{display:none}
+summary .n{font:700 13px var(--mono);color:var(--cor);border:1.5px solid var(--cor);border-radius:50%;width:24px;height:24px;display:grid;place-items:center;flex:none}
+summary h3{margin:0;font:700 18px/1.1 var(--display);letter-spacing:.02em;text-transform:uppercase}
+summary .st{margin-left:auto}
+summary .tarefa{font-size:12px;color:var(--muted)}
+.sec-corpo{padding:2px 14px 14px;display:flex;flex-direction:column;gap:12px}
+.aviso-fut{font-size:12px;color:var(--muted);background:var(--surface-2);border-radius:6px;padding:7px 10px}
+.grade{display:grid;grid-template-columns:1fr 1fr;gap:10px 12px}
+.grade .w2{grid-column:1/-1}
+.c label{display:block;font-size:12px;font-weight:500;color:var(--muted);margin-bottom:3px}
+.c label .req{color:var(--crit)}
+.c input[type=text],.c input[type=date],.c select,.c textarea{width:100%;background:var(--surface-2);border:1px solid var(--line);border-radius:7px;padding:7px 9px}
+.c textarea{min-height:62px;resize:vertical}
+.c.erro input,.c.erro select,.c.erro textarea,.c.erro .chk{border-color:var(--crit);background:var(--crit-bg)}
+.chk{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:7px;padding:8px 10px;background:var(--surface-2);cursor:pointer;font-weight:500}
+.chk input{width:18px;height:18px;accent-color:var(--s-ok)}
+.acoes{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.acoes .dir{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+.motivo-volta{display:flex;gap:8px;width:100%}
+.motivo-volta input{flex:1;background:var(--surface-2);border:1px solid var(--line);border-radius:7px;padding:6px 9px}
+.email{border:1px dashed var(--line);border-radius:8px;padding:10px;background:var(--surface-2);display:flex;flex-direction:column;gap:8px}
+.email .t{font-size:12px;font-weight:600;color:var(--muted);display:flex;align-items:center;gap:8px}
+.email textarea{width:100%;min-height:220px;font:12.5px/1.5 var(--mono);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:8px;resize:vertical}
+.bloco{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+.bloco h3{margin:0;font:700 16px var(--display);letter-spacing:.03em;text-transform:uppercase;color:var(--muted)}
+.msgs{display:flex;flex-direction:column;gap:10px}
+.msg{display:flex;gap:9px}
+.msg img{width:28px;height:28px;border-radius:50%;flex:none}
+.msg .q{font-size:12px;color:var(--muted);display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.msg .q b{color:var(--ink);font-weight:600}
+.msg p{margin:2px 0 0;white-space:pre-wrap;overflow-wrap:anywhere}
+.novo-msg{display:flex;gap:8px;align-items:flex-end}
+.novo-msg textarea{flex:1;min-height:40px;background:var(--surface-2);border:1px solid var(--line);border-radius:7px;padding:7px 9px;resize:vertical}
+.hist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;font-size:12.5px}
+.hist li{display:flex;gap:8px;align-items:baseline}
+.hist time{color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap;min-width:92px}
+.chip-setor{font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--cor)}
+.grupo{grid-column:1/-1;font:600 11.5px var(--body);letter-spacing:.06em;text-transform:uppercase;color:var(--cor);padding-top:6px;border-top:1px dashed var(--line);margin-top:2px}
+.grupo:first-child{border-top:0;padding-top:0;margin-top:0}
+.c.lido input,.c.lido select,.c.lido textarea{background:color-mix(in srgb,var(--s-ok) 12%,var(--surface-2));border-color:color-mix(in srgb,var(--s-ok) 55%,var(--line))}
+.anx-botoes{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.anx-dica{font-size:12px;color:var(--muted);flex:1 1 220px}
+.anx-status{font-size:13px;padding:8px 10px;border-radius:7px;background:var(--surface-2);display:flex;gap:8px;align-items:center}
+.anx-status.ok{background:var(--ok-bg);color:var(--s-ok)}
+.anx-status.erro{background:var(--crit-bg);color:var(--crit)}
+.giro{width:14px;height:14px;border:2px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:giro .8s linear infinite;flex:none}
+@keyframes giro{to{transform:rotate(360deg)}}
+.anx-docs{display:flex;flex-direction:column;gap:6px}
+.anx-doc{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:7px;padding:6px 8px;font-size:13px}
+.anx-doc .tp{font:600 10.5px var(--mono);border:1px solid var(--s-log);color:var(--s-log);border-radius:4px;padding:1px 5px}
+.anx-doc a{color:var(--accent);overflow-wrap:anywhere}
+.anx-doc .q{color:var(--muted);font-size:12px;margin-left:auto;white-space:nowrap}
+.anx-fotos{display:flex;flex-wrap:wrap;gap:8px}
+.anx-foto{position:relative;width:96px;height:96px;border-radius:8px;overflow:hidden;border:1px solid var(--line);background:var(--surface-2)}
+.anx-foto img{width:100%;height:100%;object-fit:cover;display:block}
+.rm{border:0;background:rgba(10,16,24,.65);color:#fff;border-radius:50%;width:22px;height:22px;cursor:pointer;line-height:1;font-size:14px}
+.anx-foto .rm{position:absolute;top:4px;right:4px}
+.anx-doc .rm{background:var(--surface-2);color:var(--muted);border:1px solid var(--line)}
+fieldset.trava{border:0;padding:0;margin:0;min-width:0}
+fieldset.trava:disabled input,fieldset.trava:disabled select,fieldset.trava:disabled textarea,fieldset.trava:disabled .chk{cursor:not-allowed;color:var(--ink);opacity:.8}
+.aviso-fut.bloq{background:var(--warn-bg);color:var(--warn)}
+.nota-setor{font-size:12.5px;color:var(--muted);background:var(--surface-2);border-radius:6px;padding:7px 10px;flex:1}
+.anx-email{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12.5px;align-items:center}
+.chk-mini{display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+.chk-mini input{accent-color:var(--accent)}
+.passo{font-size:12.5px;background:var(--ok-bg);color:var(--s-ok);border-radius:6px;padding:8px 10px}
+.passo a{color:inherit;font-weight:600}
+.f-rod{border-top:1px solid var(--line);background:var(--surface);padding:10px 18px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+
+/* Acessos */
+.acx{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.acx .l1{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.acx .l1 b{font-size:14px}
+.acx .ids{font-size:11px;color:var(--muted)}
+.acx .setores{display:flex;flex-wrap:wrap;gap:6px 14px}
+.acx .pe{font-size:11.5px;color:var(--muted)}
+.acx input[type=text]{flex:1 1 240px;min-width:0;background:var(--surface-2);border:1px solid var(--line);border-radius:7px;padding:7px 9px}
+.and-lista{display:flex;flex-direction:column;gap:6px}
+.and-linha{display:flex;align-items:center;gap:8px;font-size:13px;padding:5px 9px;border-left:3px solid var(--cor);border-radius:6px;background:var(--surface-2);flex-wrap:wrap}
+.and-linha.fraco{opacity:.6}
+.and-linha .and-nome{font-weight:600;min-width:96px}
+.and-linha .and-tempo{color:var(--muted);font-size:12px;min-width:70px}
+.and-total{font-size:12.5px;color:var(--muted);padding-top:2px}
+.motivo-volta select{background:var(--surface-2);border:1px solid var(--line);border-radius:7px;padding:6px 9px}
+.acoes select{background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:7px 9px}
+
+/* Avisos */
+.faixa{margin:12px 20px 0;padding:10px 14px;border-radius:8px;background:var(--warn-bg);color:var(--warn);font-size:13px;display:none}
+.faixa.on{display:block}
+.toasts{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);display:flex;flex-direction:column;gap:8px;z-index:40;width:min(460px,calc(100% - 32px))}
+.toast{background:var(--ink);color:var(--bg);padding:10px 14px;border-radius:8px;font-size:13px;box-shadow:0 6px 20px rgba(0,0,0,.25)}
+.toast.erro{background:var(--crit);color:#fff}
+
+@media (max-width:720px){
+  header.topo{padding:12px 16px}
+  .resumo,.barra{padding-left:16px;padding-right:16px}
+  .quadro{padding:0 16px 16px;grid-template-columns:repeat(4,minmax(260px,82vw))}
+  .lista-wrap{padding:0 16px 16px}
+  .grade{grid-template-columns:1fr}
+  .kpi{min-width:130px}
+}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<header class="topo">
+  <div class="marca">
+    <h1>Devoluções e Refaturas</h1>
+    <small>Ocorrências da filial · Logística → Comercial → Ocorrência → Processos</small>
+  </div>
+  <span class="vivo" id="vivo"><i></i><span id="vivo-txt">Conectando…</span></span>
+  <div class="espaco"></div>
+  <button class="btn" type="button" id="acessos-bt" hidden>Acessos</button>
+  <label class="campo-topo" for="setor" title="Destaca sua fila no quadro; não altera suas permissões.">Ver setor
+    <select id="setor">
+      <option value="">Escolha…</option>
+      <option value="logistica">Logística</option>
+      <option value="comercial">Comercial</option>
+      <option value="ocorrencia">Ocorrência</option>
+      <option value="processos">Processos</option>
+    </select>
+  </label>
+  <span class="eu" id="eu"></span>
+</header>
+
+<div class="faixa" id="faixa"></div>
+<div class="faixa" id="faixa-acesso"></div>
+
+<section class="resumo" id="resumo" aria-label="Resumo"></section>
+
+<div class="barra">
+  <div class="abas" role="group" aria-label="Visualização">
+    <button type="button" id="v-quadro" aria-pressed="true">Quadro</button>
+    <button type="button" id="v-lista" aria-pressed="false">Lista</button>
+    <button type="button" id="v-acomp" aria-pressed="false">Acompanhamento</button>
+    <button type="button" id="v-fim" aria-pressed="false">Finalizados</button>
+  </div>
+  <label class="campo-topo" id="fim-filtro" for="fim-periodo" hidden>Período
+    <select id="fim-periodo">
+      <option value="0">Todos</option>
+      <option value="30">Últimos 30 dias</option>
+      <option value="90">Últimos 90 dias</option>
+      <option value="365">Último ano</option>
+    </select>
+  </label>
+  <span class="filtros" id="acomp-filtros" hidden>
+    <label class="campo-topo" for="f-etapa">Etapa
+      <select id="f-etapa">
+        <option value="">Todas</option>
+        <option value="logistica">Logística</option>
+        <option value="comercial">Comercial</option>
+        <option value="ocorrencia">Ocorrência</option>
+        <option value="processos">Processos</option>
+      </select>
+    </label>
+    <label class="campo-topo" for="f-sit">Situação
+      <select id="f-sit">
+        <option value="todas">Todas</option>
+        <option value="andamento">Em andamento</option>
+        <option value="aguardando">Aguardando</option>
+        <option value="parado2">Paradas há 2+ dias</option>
+        <option value="parado4">Paradas há 4+ dias</option>
+        <option value="retrabalho">Com retrabalho</option>
+        <option value="atrasado">Fora do prazo</option>
+        <option value="vence">Vence em 24 h</option>
+      </select>
+    </label>
+  </span>
+  <input class="busca" id="busca" type="search" placeholder="Buscar NF, cliente, vendedor, ocorrência…" aria-label="Buscar">
+  <div class="espaco"></div>
+  <button class="btn" type="button" id="copiar-tabela" hidden>Copiar para Excel</button>
+  <button class="btn pri" type="button" id="novo">+ Nova devolução</button>
+</div>
+
+<main>
+  <div class="quadro" id="quadro"></div>
+  <div class="lista-wrap" id="lista" hidden></div>
+  <div class="lista-wrap" id="acomp" hidden></div>
+  <div class="lista-wrap" id="fim" hidden></div>
+</main>
+
+<div class="veu" id="veu"></div>
+<aside class="ficha" id="ficha" aria-label="Ficha da devolução"></aside>
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<script>
+"use strict";
+/* ---------- Definições do processo ---------- */
+const ETAPAS = [
+  {k:"logistica",  nome:"Logística",  tarefa:"Confirmar com o motorista e registrar a devolução", cor:"var(--s-log)"},
+  {k:"comercial",  nome:"Comercial",  tarefa:"Revender ou dar destino à mercadoria", cor:"var(--s-com)"},
+  {k:"ocorrencia", nome:"Ocorrência", tarefa:"Abrir ocorrência e enviar o e-mail", cor:"var(--s-oco)"},
+  {k:"processos",  nome:"Processos",  tarefa:"Operação: novo pedido, faturamento e boleto", cor:"var(--s-pro)"},
+  {k:"concluido",  nome:"Concluído",  tarefa:"Casos encerrados",                 cor:"var(--s-ok)"}
+];
+const IDX = Object.fromEntries(ETAPAS.map((e,i)=>[e.k,i]));
+const ET = Object.fromEntries(ETAPAS.map(e=>[e.k,e]));
+const MOTIVOS = ["Avaria / produto danificado","Recusa do cliente","Produto errado / divergente","Quantidade divergente","Preço divergente","Pedido em duplicidade","Cliente fechado / ausente","Sem crédito / pagamento","Validade / vencimento","Endereço não localizado","Outro"];
+const REVENDA = "Revendida para outro cliente";
+const ESTOQUE = "Retorno ao estoque";
+const BOLETO = "Boleto emitido";
+const precisaFaturar = c => ((c&&c.comercial)||{}).decisao !== ESTOQUE;
+const CAMPOS = {
+  logistica: [
+    {grupo:"Contato do motorista"},
+    {k:"motorista", l:"Motorista que informou", t:"text", req:1},
+    {k:"placa", l:"Placa", t:"text", mono:1, req:1},
+    {k:"informadoEm", l:"Informado em", t:"datetime", req:1},
+    {k:"dataDevolucao", l:"Data da devolução", t:"date", req:1},
+    {grupo:"Nota fiscal (preenchida pelo anexo da NF)"},
+    {k:"nf", l:"Número da NF", t:"text", req:1, mono:1},
+    {k:"serie", l:"Série", t:"text", mono:1, req:1},
+    {k:"chave", l:"Chave de acesso", t:"text", mono:1, w:2, req:1},
+    {k:"dataEmissao", l:"Emissão da NF", t:"date", req:1},
+    {k:"valorNf", l:"Valor total da NF (R$)", t:"money", req:1},
+    {k:"cliente", l:"Cliente (destinatário)", t:"text", req:1, w:2},
+    {k:"cnpjCliente", l:"CNPJ / CPF", t:"text", mono:1, req:1},
+    {k:"codCliente", l:"Código do cliente (opcional)", t:"text"},
+    {k:"enderecoCliente", l:"Endereço do cliente", t:"text", w:2, req:1},
+    {k:"cidadeUf", l:"Cidade / UF", t:"text", req:1},
+    {k:"vendedor", l:"Vendedor (opcional)", t:"text"},
+    {grupo:"Devolução"},
+    {k:"motivo", l:"Motivo da devolução", t:"select", opts:MOTIVOS, req:1},
+    {k:"tipo", l:"Devolução", t:"select", opts:["Total","Parcial"], req:1},
+    {k:"motivoDetalhe", l:"O que o motorista relatou", t:"area", w:2, req:1},
+    {k:"valor", l:"Valor devolvido (R$)", t:"money", req:1},
+    {k:"itens", l:"Produtos e quantidades devolvidas", t:"area", w:2, req:1},
+    {k:"motivoConfirmado", l:"Motivo confirmado com o motorista", t:"check", req:1, w:2},
+    {k:"obs", l:"Observações da logística (opcional)", t:"area", w:2}
+  ],
+  comercial: [
+    {k:"decisao", l:"Destino da mercadoria", t:"select", opts:[REVENDA,"Reentrega ao mesmo cliente",ESTOQUE], req:1, w:2},
+    {k:"novoCliente", l:"Novo cliente", t:"text", w:2, reqSe:d=>d.decisao===REVENDA},
+    {k:"codNovoCliente", l:"Código do novo cliente", t:"text", reqSe:d=>d.decisao===REVENDA},
+    {k:"novoVendedor", l:"Vendedor da revenda", t:"text", reqSe:d=>d.decisao===REVENDA},
+    {k:"preco", l:"Preço / valor da revenda (R$)", t:"money", reqSe:d=>d.decisao===REVENDA},
+    {k:"condPagamento", l:"Condição de pagamento", t:"text", reqSe:d=>d.decisao===REVENDA},
+    {k:"endereco", l:"Endereço de entrega", t:"area", w:2, reqSe:d=>d.decisao===REVENDA},
+    {k:"previsao", l:"Previsão de entrega", t:"date", reqSe:d=>d.decisao&&d.decisao!==ESTOQUE},
+    {k:"obs", l:"Observações do comercial (obrigatório se voltar ao estoque)", t:"area", w:2, reqSe:d=>d.decisao===ESTOQUE}
+  ],
+  ocorrencia: [
+    {k:"numero", l:"Nº da ocorrência", t:"text", req:1, mono:1},
+    {k:"dataAbertura", l:"Aberta em", t:"date", req:1},
+    {k:"destinatarios", l:"Enviada para (e-mails)", t:"text", w:2, req:1},
+    {k:"emailEnviado", l:"E-mail da ocorrência enviado", t:"check", req:1, w:2},
+    {k:"obs", l:"Observações da ocorrência (opcional)", t:"area", w:2}
+  ],
+  processos: [
+    {grupo:"Novo pedido e faturamento (preenchido pelo anexo da nova NF)"},
+    {k:"numeroPedido", l:"Nº do novo pedido", t:"text", mono:1, reqSe:(d,c)=>precisaFaturar(c)},
+    {k:"novaNf", l:"Nova NF emitida", t:"text", mono:1, reqSe:(d,c)=>precisaFaturar(c)},
+    {k:"chaveNovaNf", l:"Chave de acesso da nova NF", t:"text", mono:1, w:2},
+    {k:"clienteNovaNf", l:"Cliente da nova NF", t:"text", w:2},
+    {k:"cnpjNovaNf", l:"CNPJ / CPF da nova NF", t:"text", mono:1},
+    {k:"dataFaturamento", l:"Data do faturamento", t:"date", reqSe:(d,c)=>precisaFaturar(c)},
+    {k:"valorFaturado", l:"Valor faturado (R$)", t:"money", reqSe:(d,c)=>precisaFaturar(c)},
+    {grupo:"Cobrança"},
+    {k:"cobranca", l:"Cobrança do cliente", t:"select", opts:[BOLETO,"Sem boleto – somente nota fiscal"], w:2, reqSe:(d,c)=>precisaFaturar(c)},
+    {k:"boletoNumero", l:"Nº do boleto", t:"text", mono:1, reqSe:d=>d.cobranca===BOLETO},
+    {k:"boletoVencimento", l:"Vencimento do boleto", t:"date", reqSe:d=>d.cobranca===BOLETO},
+    {grupo:"Finalização"},
+    {k:"entradaEstoque", l:"Entrada da mercadoria no estoque registrada (só quando volta ao estoque)", t:"check", w:2, reqSe:(d,c)=>!precisaFaturar(c)},
+    {k:"conferido", l:"Conferido no sistema", t:"check", w:2, req:1},
+    {k:"obs", l:"Observações da operação (opcional)", t:"area", w:2},
+    {grupo:"Resumo final por e-mail"},
+    {k:"resumoEnviar", l:"Preparar o e-mail de resumo ao encerrar o caso (com os arquivos marcados na prévia abaixo)", t:"check", w:2},
+    {k:"resumoPara", l:"Enviar resumo para (e-mails separados por vírgula)", t:"text", w:2, reqSe:d=>!!d.resumoEnviar},
+    {k:"resumoCc", l:"Com cópia para (opcional)", t:"text", w:2}
+  ]
+};
+const SECOES = ["logistica","comercial","ocorrencia","processos"];
+
+/* ---------- Utilidades ---------- */
+const $ = (s,r=document)=>r.querySelector(s);
+const esc = v => String(v==null?"":v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const agoraISO = ()=>new Date().toISOString();
+const hojeYMD = ()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
+const BRL = new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL"});
+const fmtMoeda = n => (typeof n==="number" && isFinite(n)) ? BRL.format(n) : "";
+const fmtNum = n => (typeof n==="number" && isFinite(n)) ? n.toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2}) : "";
+function lerMoeda(s){ s=String(s||"").replace(/[^\d,.-]/g,""); if(!s) return null; if(s.includes(",")) s=s.replace(/\./g,"").replace(",","."); const n=parseFloat(s); return isFinite(n)?n:null; }
+function fmtData(ymd){ if(!ymd||typeof ymd!=="string") return ""; const m=ymd.match(/^(\d{4})-(\d{2})-(\d{2})/); return m?`${m[3]}/${m[2]}/${m[1]}`:""; }
+function fmtQuando(iso){ if(!iso) return ""; const d=new Date(iso); if(isNaN(d)) return ""; const hoje=new Date(); const mesmoDia=d.toDateString()===hoje.toDateString(); const hm=d.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}); return mesmoDia?("hoje "+hm):(d.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})+" "+hm); }
+function diasDesde(iso){ if(!iso) return 0; const t=new Date(iso).getTime(); if(isNaN(t)) return 0; return Math.max(0,Math.floor((Date.now()-t)/86400000)); }
+function chave(){ return Date.now().toString(36)+"_"+Math.random().toString(36).slice(2,7); }
+function novoCodigo(){ const d=new Date(); const y=String(d.getFullYear()).slice(2); const ab="ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; let r=""; for(let i=0;i<3;i++) r+=ab[Math.floor(Math.random()*ab.length)]; return `DEV-${y}${String(d.getMonth()+1).padStart(2,"0")}${String(d.getDate()).padStart(2,"0")}-${r}`; }
+function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+function toast(msg, erro){ const t=document.createElement("div"); t.className="toast"+(erro?" erro":""); if(typeof msg==="string") t.textContent=msg; else t.appendChild(msg); $("#toasts").appendChild(t); setTimeout(()=>t.remove(), erro?7000:4500); return t; }
+function pessoa(uid){ return `<span data-uid="${esc(uid||"")}">${uid?"…":"Exemplo"}</span>`; }
+
+/* ---------- Runtime: artefato do claude.ai ou modo demonstração ---------- */
+let RT = null;
+try{ if(typeof claude !== "undefined" && claude && typeof claude.use === "function") RT = claude; }catch(e){}
+const MODO_DEMO = !RT;
+if(!RT) RT = criarRuntimeDemo();
+
+function criarRuntimeDemo(){
+  const CHAVE = "dev-demo-v1", CHAVE_UID = "dev-demo-uid";
+  let base = {casos:{}, acessos:{}, config:{}};
+  try{ const s = localStorage.getItem(CHAVE); if(s){ const lido = JSON.parse(s); if(lido && typeof lido === "object") base = lido; } }catch(e){}
+  if(!base.casos) base.casos = {};
+  if(!base.acessos) base.acessos = {};
+  if(!base.config) base.config = {};
+  const ouvintes = {};
+  let seq = 0;
+  let uid = "";
+  try{
+    uid = localStorage.getItem(CHAVE_UID) || "";
+    if(!uid){ uid = "demo_" + Math.random().toString(36).slice(2,8); localStorage.setItem(CHAVE_UID, uid); }
+  }catch(e){ uid = "demo_local"; }
+  function salvar(){
+    try{ localStorage.setItem(CHAVE, JSON.stringify(base)); }
+    catch(e){ toast("Modo demonstração: o navegador ficou sem espaço para salvar.", true); }
+  }
+  function fundir(dst, src){
+    for(const k in src){
+      const v = src[k], d = dst[k];
+      if(v && typeof v === "object" && !Array.isArray(v) && d && typeof d === "object" && !Array.isArray(d)) dst[k] = fundir(Object.assign({}, d), v);
+      else dst[k] = v;
+    }
+    return dst;
+  }
+  function retrato(col){
+    const b = base[col] || {};
+    return { metadata:{fromCache:false}, docChanges:()=>[], docs: Object.keys(b).map(id => ({ id:id, metadata:{hasPendingWrites:false}, data:()=>b[id] })) };
+  }
+  function avisar(col){ (ouvintes[col] || []).slice().forEach(fn => setTimeout(() => fn(retrato(col)), 0)); }
+  const db = {
+    collection: name => ({
+      onSnapshot(cb){ (ouvintes[name] = ouvintes[name] || []).push(cb); setTimeout(() => cb(retrato(name)), 0); return () => {}; },
+      doc(){
+        const id = "c" + Date.now().toString(36) + (++seq);
+        return {
+          id: id,
+          set: async v => { (base[name] = base[name] || {})[id] = v; salvar(); avisar(name); },
+          update: async v => { const b = base[name] = base[name] || {}; b[id] = fundir(Object.assign({}, b[id] || {}), v); salvar(); avisar(name); },
+          delete: async () => { delete (base[name] || {})[id]; salvar(); avisar(name); }
+        };
+      }
+    }),
+    doc: path => {
+      const p = path.split("/"), name = p[0], id = p[1];
+      return {
+        set: async v => { (base[name] = base[name] || {})[id] = Object.assign({}, v); salvar(); avisar(name); },
+        update: async v => { const b = base[name] = base[name] || {}; b[id] = fundir(Object.assign({}, b[id] || {}), v); salvar(); avisar(name); },
+        delete: async () => { delete (base[name] || {})[id]; salvar(); avisar(name); }
+      };
+    }
+  };
+  const user = {
+    me: async () => ({ id: uid, name: "Visitante (demo)", canEdit: true }),
+    profiles: async ids => { const o = {}; ids.forEach(i => { o[i] = { name: i === uid ? "Você" : "Colega", avatarUrl: "" }; }); return o; },
+    can: async () => true
+  };
+  const downloads = {
+    save: async d => {
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(d.data);
+      a.download = d.filename || "arquivo";
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    }
+  };
+  const servicos = {db:db, user:user, downloads:downloads};
+  return { use: async nome => { const s = servicos[nome]; if(!s) throw {code:"not_granted"}; return s; } };
+}
+function avisoModoDemo(){
+  const faixa = document.getElementById("faixa");
+  if(!faixa || document.getElementById("faixa-demo")) return;
+  const d = document.createElement("div");
+  d.id = "faixa-demo"; d.className = "faixa on";
+  d.textContent = "Modo demonstração — os casos ficam salvos apenas neste navegador (localStorage), sem anexos e sem envio de e-mail. Para uso real, conecte o banco na Cloudflare (D1).";
+  faixa.parentNode.insertBefore(d, faixa.nextSibling);
+}
+/* ---------- Estado ---------- */
+let db=null, user=null, meId=null, assets=null, sample=null, sampleImgs=false;
+let anexosPendentes={}, lendoNF=false, mcp=null, enviando=false, downloads=null;
+const selAnx={oco:{}, res:{}}; const PADRAO_ANX={oco:["nf","foto"], res:["nfnova","boleto","faturamento"]};
+const ultimoRascunho={};
+const cacheNomes={};
+const PAINEL_URL="https://claude.ai/artifact/QUoHL3FzpfEDqwBEe2KEHW";
+const M365="Microsoft 365";
+const casos = new Map();
+let carregado=false, primeiroSnap=true, podeEscrever=true, souEditor=false;
+let visao = "quadro", busca="", periodoFim = 0, filtroEtapa = "", filtroSit = "todas";
+let setor = lsGet("dev-setor") || "";
+let aberto = null;           // id do caso na ficha, ou "__novo__"
+let sujo = {};               // seções com edição não salva
+let ultimaEtapaFicha = null;
+let fila = Promise.resolve();
+const enfileirar = fn => (fila = fila.then(fn, fn));
+
+/* ---------- Acessos por setor: identidade e autorização ---------- */
+const DONOS = [];                        // opcional: cole aqui o id de quem administra o painel
+const ROTULO_SETOR = {logistica:"Logística",comercial:"Comercial",ocorrencia:"Ocorrência",processos:"Processos",concluido:"Concluído"};
+let acessos = new Map();                 // uid -> documento de acesso
+let meuAcesso = {uid:null,nome:"",setores:[],papel:"leitor",dono:false,gestor:false};
+let acessoPronto = false, meNome = "";
+
+function papelDe(d){ const p = (d && d.papel) || "membro"; return (p === "dono" || p === "gestor") ? p : "membro"; }
+
+function calcularAcesso(){
+  const d = acessos.get(meId) || null;
+  const setores = (d && Array.isArray(d.setores) ? d.setores : []).filter(k => ROTULO_SETOR[k] && k !== "concluido");
+  const dono = DONOS.indexOf(meId) >= 0 || papelDe(d) === "dono";
+  meuAcesso = {uid:meId, nome:(d && d.nome) || meNome, setores:setores, dono:dono,
+               papel: dono ? "dono" : papelDe(d), gestor: dono || papelDe(d) === "gestor"};
+  if(setores.indexOf(setor) < 0) setor = setores[0] || "";
+  montarSeletorSetor();
+  aplicarRestricoes();
+  if(carregado) render();
+}
+
+function montarSeletorSetor(){
+  const sel = $("#setor");
+  if(sel){
+    if(!meuAcesso.setores.length){
+      sel.innerHTML = `<option value="">Sem setor liberado</option>`;
+      sel.disabled = true;
+    } else {
+      sel.disabled = meuAcesso.setores.length === 1;
+      sel.innerHTML = meuAcesso.setores.map(k => `<option value="${k}">${ROTULO_SETOR[k]}</option>`).join("");
+      sel.value = setor;
+    }
+  }
+  const eu = $("#eu");
+  if(eu){
+    const txt = meuAcesso.setores.length ? meuAcesso.setores.map(k => ROTULO_SETOR[k]).join(" / ") : "sem setor liberado";
+    eu.innerHTML = "<b>" + esc(meuAcesso.nome || "você") + "</b> · " + esc(txt) + (meuAcesso.gestor ? " · gestor" : "");
+  }
+}
+
+function aplicarRestricoes(){
+  const novo = $("#novo"); if(novo) novo.hidden = !podeCriar();
+  const bt = $("#acessos-bt"); if(bt) bt.hidden = !meuAcesso.gestor;
+  const fx = $("#faixa-acesso"); if(!fx) return;
+  fx.innerHTML = ""; fx.classList.remove("on");
+  if(!meId || !acessoPronto) return;
+  if(!acessos.size){
+    fx.textContent = "Primeiro acesso: o painel ainda não tem administração definida. Quem assumir libera o acesso de cada setor. ";
+    if(souEditor){
+      const b = document.createElement("button");
+      b.type = "button"; b.className = "btn peq"; b.textContent = "Assumir a administração"; b.onclick = reivindicarAdmin;
+      fx.appendChild(b);
+    }
+    fx.classList.add("on");
+    return;
+  }
+  if(!meuAcesso.setores.length && !meuAcesso.dono){
+    fx.textContent = "Seu usuário ainda não tem setor liberado. Você pode consultar os casos, mas não editar. ";
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "btn peq"; b.textContent = "Pedir liberação"; b.onclick = pedirAcesso;
+    fx.appendChild(b);
+    fx.classList.add("on");
+  }
+}
+
+function podeAgir(k){
+  if(!meId) return {ok:false, msg:"Não identifiquei seu usuário. Abra o painel pela sua conta da empresa."};
+  if(!acessoPronto) return {ok:false, msg:"Verificando seu acesso ao painel… tente de novo em instantes."};
+  if(!meuAcesso.setores.includes(k)){
+    const meu = meuAcesso.setores.length ? meuAcesso.setores.map(x => ROTULO_SETOR[x]).join(" / ") : "somente leitura";
+    return {ok:false, msg:`Esta etapa é do setor ${ROTULO_SETOR[k]}. Seu acesso é ${meu}.`};
+  }
+  return {ok:true};
+}
+function podeCriar(){ return podeEscrever && !!db && meuAcesso.setores.includes("logistica"); }
+
+/* ---------- Andamento por etapa: registros, tempos e retrabalho ---------- */
+const SEMENTE = {ocorrencia:["dataAbertura"]};
+
+function recShape(r){
+  r = r || {};
+  return {
+    status: r.status || "pendente",
+    iniciadoEm: r.iniciadoEm || null,
+    entradaEm: r.entradaEm || null,
+    encerradoEm: r.encerradoEm || null,
+    devolvidoEm: r.devolvidoEm || null,
+    por: r.por || null,
+    devolucoes: Number(r.devolucoes) || 0,
+    aguardando: r.aguardando || null,
+    passagens: (r.passagens || []).slice(-20)
+  };
+}
+function mapaEtapas(e){
+  const out = {};
+  for(const s of SECOES) out[s] = recShape(e && e[s]);
+  return out;
+}
+const cacheEtapas = new WeakMap();
+function etapasDe(c){
+  if(!c || typeof c !== "object") return {};
+  if(c.etapas && typeof c.etapas === "object"){
+    const memo = cacheEtapas.get(c);
+    if(memo) return memo;
+    const feito = {};
+    for(const s of SECOES) feito[s] = recShape(c.etapas[s]);
+    cacheEtapas.set(c, feito);
+    return feito;
+  }
+  const out = {};
+  const iAt = SECOES.indexOf(c.etapa);
+  const base = c.criadoEm || c.etapaDesde || agoraISO();
+  if(c.etapa === "concluido"){
+    for(const s of SECOES) out[s] = recShape({status:"concluida", iniciadoEm:base, encerradoEm:c.etapaDesde || base, passagens:[{de:base, ate:c.etapaDesde || base}]});
+    return out;
+  }
+  const i = iAt < 0 ? 0 : iAt;
+  SECOES.forEach((s, idx) => {
+    if(idx < i) out[s] = recShape({status:"concluida", iniciadoEm:base, encerradoEm:c.etapaDesde || base, passagens:[{de:base, ate:c.etapaDesde || base}]});
+    else if(idx === i) out[s] = recShape({status:"ativa", iniciadoEm:c.etapaDesde || base, entradaEm:c.etapaDesde || base});
+    else out[s] = recShape(null);
+  });
+  return out;
+}
+function etapaAtual(c){
+  const e = etapasDe(c);
+  for(const s of SECOES){ const st = e[s] && e[s].status; if(st === "ativa" || st === "aguardando") return s; }
+  if(SECOES.every(s => e[s].status === "concluida")) return "concluido";
+  for(const s of SECOES){ if(e[s].status !== "concluida") return s; }
+  return "concluido";
+}
+function entradaDaEtapa(c){
+  const e = etapasDe(c);
+  const at = etapaAtual(c);
+  if(at === "concluido"){
+    const ult = e[SECOES[SECOES.length - 1]] || {};
+    return ult.encerradoEm || c.etapaDesde || c.criadoEm || null;
+  }
+  const r = e[at] || {};
+  return r.entradaEm || r.iniciadoEm || c.criadoEm || null;
+}
+function normalizarCaso(v){
+  const o = Object.assign({}, v);
+  const mapa = etapasDe(o);
+  o.etapas = mapa;
+  cacheEtapas.set(o, mapa);
+  o.etapa = etapaAtual(o);
+  o.etapaDesde = entradaDaEtapa(o);
+  return o;
+}
+function recAguardando(c, s){
+  const r = (c && c.etapas ? c.etapas[s] : null) || null;
+  return (r && r.status === "aguardando" && r.aguardando) ? r.aguardando : null;
+}
+function aguardandoDe(c){ return recAguardando(c, etapaAtual(c)); }
+function msDe(iso){ const t = iso ? new Date(iso).getTime() : NaN; return isFinite(t) ? t : null; }
+function tempoEtapa(r, agoraT){
+  if(!r) return 0;
+  let ms = 0;
+  for(const p of (r.passagens || [])){ const a = msDe(p.de), b = msDe(p.ate); if(a != null && b != null && b > a) ms += b - a; }
+  const ent = msDe(r.entradaEm);
+  if(ent != null && agoraT > ent) ms += agoraT - ent;
+  return ms;
+}
+function tempoTotal(c, agoraT){
+  const ini = msDe(c.criadoEm) || msDe(c.etapaDesde);
+  if(ini == null) return 0;
+  const fim = c.etapa === "concluido" ? (msDe(c.etapaDesde) || agoraT) : agoraT;
+  return Math.max(0, fim - ini);
+}
+function totalDevolucoes(c){
+  const e = etapasDe(c); let n = 0;
+  for(const s of SECOES) n += Number(e[s] && e[s].devolucoes) || 0;
+  return n;
+}
+function fmtDur(ms){
+  if(!ms || ms < 60000) return "";
+  const min = Math.round(ms / 60000), h = Math.floor(min / 60), d = Math.floor(h / 24);
+  if(d >= 1) return d + " d" + (h % 24 ? " " + (h % 24) + " h" : "");
+  if(h >= 1) return h + " h" + (min % 60 ? " " + (min % 60) + " min" : "");
+  return min + " min";
+}
+
+function abrirEtapa(e, s, agora, por){
+  const r = e[s] || (e[s] = recShape(null));
+  r.status = "ativa";
+  r.iniciadoEm = r.iniciadoEm || agora;
+  r.entradaEm = agora;
+  r.por = por || null;
+  r.aguardando = null;
+}
+function fecharEtapa(e, s, agora){
+  const r = e[s]; if(!r) return;
+  r.passagens = (r.passagens || []).concat([{de:r.entradaEm || r.iniciadoEm || agora, ate:agora}]).slice(-20);
+  r.status = "concluida"; r.encerradoEm = agora; r.entradaEm = null; r.aguardando = null;
+}
+function baixarEtapa(e, s, agora){
+  const r = e[s]; if(!r) return;
+  if(r.entradaEm) r.passagens = (r.passagens || []).concat([{de:r.entradaEm, ate:agora}]).slice(-20);
+  r.status = "pendente"; r.entradaEm = null; r.aguardando = null;
+}
+function transAvancar(c, agora){
+  const e = etapasDe(c); const at = etapaAtual(c);
+  const i = SECOES.indexOf(at);
+  if(i < 0) return null;
+  fecharEtapa(e, at, agora);
+  const prox = SECOES[i + 1];
+  if(prox) abrirEtapa(e, prox, agora, meId);
+  return {mapa:mapaEtapas(e), etapa: prox || "concluido", etapaDesde:agora};
+}
+function transDevolver(c, alvo, agora){
+  const e = etapasDe(c); const at = etapaAtual(c);
+  const iAt = SECOES.indexOf(at), iAlvo = SECOES.indexOf(alvo);
+  if(iAt < 0 || iAlvo < 0 || iAlvo >= iAt) return null;
+  for(let i = iAlvo; i <= iAt; i++) baixarEtapa(e, SECOES[i], agora);
+  abrirEtapa(e, alvo, agora, meId);
+  e[alvo].devolucoes = (e[alvo].devolucoes || 0) + 1;
+  e[alvo].devolvidoEm = agora;
+  return {mapa:mapaEtapas(e), etapa:alvo, etapaDesde:agora};
+}
+function transReabrir(c, alvo, agora){
+  const e = etapasDe(c); const iAlvo = SECOES.indexOf(alvo);
+  if(iAlvo < 0) return null;
+  for(let i = iAlvo; i < SECOES.length; i++) baixarEtapa(e, SECOES[i], agora);
+  abrirEtapa(e, alvo, agora, meId);
+  return {mapa:mapaEtapas(e), etapa:alvo, etapaDesde:agora};
+}
+function transAguardar(c, motivo, agora){
+  const e = etapasDe(c); const at = etapaAtual(c); const r = e[at];
+  if(!r || (r.status !== "ativa" && r.status !== "aguardando")) return null;
+  r.status = "aguardando";
+  r.aguardando = {em:agora, motivo:motivo, por:meId};
+  return {mapa:mapaEtapas(e), etapa:at, etapaDesde:r.entradaEm || r.iniciadoEm || agora};
+}
+function transRetomar(c, agora){
+  const e = etapasDe(c); const at = etapaAtual(c); const r = e[at];
+  if(!r || r.status !== "aguardando") return null;
+  r.status = "ativa"; r.aguardando = null;
+  return {mapa:mapaEtapas(e), etapa:at, etapaDesde:r.entradaEm || r.iniciadoEm || agora};
+}
+function etapasIniciais(avancou, agora){
+  const e = {};
+  for(const s of SECOES) e[s] = recShape(null);
+  if(avancou){
+    e.logistica = recShape({status:"concluida", iniciadoEm:agora, encerradoEm:agora, passagens:[{de:agora, ate:agora}], por:meId});
+    e.comercial = recShape({status:"ativa", iniciadoEm:agora, entradaEm:agora, por:meId});
+  } else {
+    e.logistica = recShape({status:"ativa", iniciadoEm:agora, entradaEm:agora, por:meId});
+  }
+  return mapaEtapas(e);
+}
+function andamentoLinhas(c){
+  const e = etapasDe(c), agoraT = Date.now();
+  const rot = {concluida:"concluída", ativa:"em andamento", aguardando:"aguardando", pendente:"pendente"};
+  const at = etapaAtual(c), pr = prazoDe(c);
+  const l = SECOES.map(s => {
+    const r = e[s] || {};
+    const extra = r.devolucoes ? " · " + r.devolucoes + " devolução(ões)" : "";
+    const sla = (s === at && prazoDaEtapa(s)) ? " · prazo " + prazoDaEtapa(s) + " d" + (pr.txt ? " · " + pr.txt : "") : "";
+    return ET[s].nome + ": " + (rot[r.status] || "pendente") + " · " + (fmtDur(tempoEtapa(r, agoraT)) || "—") + extra + sla;
+  });
+  l.push("Ciclo total: " + (fmtDur(tempoTotal(c, agoraT)) || "—"));
+  return l;
+}
+function andamentoCorpo(c){
+  const e = etapasDe(c), agoraT = Date.now(), at = etapaAtual(c), pr = prazoDe(c);
+  const rot = {concluida:"Concluída", ativa:"Em andamento", aguardando:"Aguardando", pendente:"Pendente"};
+  const linhas = SECOES.map(s => {
+    const r = e[s] || {}, st = r.status || "pendente";
+    const dur = tempoEtapa(r, agoraT);
+    const cls = st === "concluida" ? "ok" : st === "ativa" ? "" : "warn";
+    const chave = (s === at && prazoDaEtapa(s)) ? `<span class="pill ${pr.txt ? pr.cls : ""}" title="${esc(pr.dica)}">${esc(pr.txt || ("prazo " + prazoDaEtapa(s) + " d"))}</span>` : "";
+    return `<div class="and-linha${st === "pendente" ? " fraco" : ""}" style="--cor:${ET[s].cor}">
+      <span class="and-nome">${esc(ET[s].nome)}</span>
+      <span class="and-tempo mono">${esc(dur ? fmtDur(dur) : "—")}</span>
+      <span class="pill ${cls}" ${r.aguardando ? `title="${esc(r.aguardando.motivo || "aguardando")} · desde ${esc(fmtQuando(r.aguardando.em))}"` : ""}>${rot[st] || "Pendente"}</span>
+      ${r.devolucoes ? `<span class="pill crit" title="Vezes que esta etapa voltou para correção">↺ ${r.devolucoes}</span>` : ""}
+      ${chave}
+    </div>`;
+  }).join("");
+  const devs = totalDevolucoes(c);
+  return `<div class="and-lista">${linhas}</div>
+    <div class="and-total">Ciclo total: <b>${esc(fmtDur(tempoTotal(c, agoraT)) || "—")}</b>${devs ? ` · <b>${devs}</b> ${devs === 1 ? "devolução de etapa" : "devoluções de etapa"}` : " · sem retrabalho"}</div>`;
+}
+
+
+
+/* ---------- Nomes de pessoas ---------- */
+async function resolverNomes(root){
+  const spans=[...root.querySelectorAll("[data-uid]")];
+  const ids=[...new Set(spans.map(s=>s.dataset.uid).filter(Boolean))];
+  const faltando=ids.filter(id=>!cacheNomes[id]);
+  let ps={};
+  if(user && faltando.length){ try{ ps=await user.profiles(faltando); }catch(e){} }
+  for(const id in ps) if(ps[id]&&ps[id].name) cacheNomes[id]=ps[id].name;
+  for(const s of spans){ const id=s.dataset.uid; if(!id){ s.textContent="Exemplo"; continue; } s.textContent=cacheNomes[id]||"Alguém"; }
+  root.querySelectorAll("img[data-av]").forEach(img=>{ const p=ps[img.dataset.av]; if(p&&p.avatarUrl) img.src=p.avatarUrl; });
+}
+
+/* ---------- Filtro e ordenação ---------- */
+function casoTexto(c){ const L=c.logistica||{}, C=c.comercial||{}, O=c.ocorrencia||{}, P=c.processos||{}; return [c.codigo,L.nf,L.chave,L.cnpjCliente,L.motorista,L.placa,L.cliente,L.codCliente,L.vendedor,L.motivo,C.novoCliente,C.novoVendedor,O.numero,P.novaNf].join(" ").toLowerCase(); }
+function casosFiltrados(){ const q=busca.trim().toLowerCase(); const arr=[...casos.entries()].filter(([,c])=>c&&!c.excluido).map(([id,c])=>({id,...c})); return q?arr.filter(c=>casoTexto(c).includes(q)):arr; }
+
+/* ---------- Resumo ---------- */
+function renderResumo(){
+  const todos=[...casos.values()].filter(c=>c&&!c.excluido);
+  const abertos=todos.filter(c=>c.etapa!=="concluido");
+  const valor=abertos.reduce((s,c)=>s+((c.logistica&&typeof c.logistica.valor==="number")?c.logistica.valor:0),0);
+  const agoraT=Date.now();
+  const agoraSla=Date.now();
+  const atrasados=abertos.filter(c=>{ const v=vencimentoDe(c); return v!=null && v<agoraSla; }).length;
+  const aguardando=abertos.filter(c=>!!aguardandoDe(c)).length;
+  const retrabalho=abertos.filter(c=>totalDevolucoes(c)>0).length;
+  const encerrados=todos.filter(c=>c.etapa==="concluido" && msDe(c.criadoEm));
+  const ciclo=encerrados.length ? encerrados.reduce((s,c)=>s+tempoTotal(c,agoraT),0)/encerrados.length : 0;
+  const semana=todos.filter(c=>c.etapa==="concluido" && diasDesde(c.etapaDesde)<7).length;
+  const revendidos=todos.filter(c=>c.comercial&&c.comercial.decisao===REVENDA).length;
+  const k=(r,v,cls="")=>`<div class="kpi ${cls}"><span>${esc(r)}</span><b>${esc(v)}</b></div>`;
+  $("#resumo").innerHTML = k("Devoluções em aberto", abertos.length)
+    + k("Valor devolvido em aberto", fmtMoeda(valor)||"R$ 0,00")
+    + k("Fora do prazo", atrasados, atrasados?"alerta":"")
+    + k("Aguardando terceiros", aguardando, aguardando?"alerta":"")
+    + k("Com retrabalho", retrabalho, retrabalho?"alerta":"")
+    + k("Ciclo médio dos encerrados", fmtDur(ciclo)||"—")
+    + k("Concluídas nos últimos 7 dias", semana)
+    + k("Revendidas para outro cliente", revendidos);
+}
+
+/* ---------- Quadro ---------- */
+function pillDias(c){
+  if(c.etapa==="concluido") return `<span class="pill ok">Encerrado ${esc(fmtQuando(c.etapaDesde))}</span>`;
+  const d=diasDesde(c.etapaDesde); const cls=d>=4?"crit":d>=2?"warn":""; const txt=d===0?"Na etapa desde hoje":d===1?"1 dia na etapa":d+" dias na etapa";
+  return `<span class="pill ${cls}">${txt}</span>`;
+}
+function cartao(c){
+  const L=c.logistica||{}, C=c.comercial||{}, O=c.ocorrencia||{};
+  const nCom=c.comentarios?Object.keys(c.comentarios).length:0;
+  const anx=Object.values(c.anexos||{}).filter(a=>a&&a.id); const nFotos=anx.filter(a=>a.tipo==="foto").length, temNF=anx.some(a=>a.tipo!=="foto");
+  const devs=totalDevolucoes(c), agu=aguardandoDe(c), pr=prazoDe(c);
+  const meta=[];
+  if(L.nf) meta.push(`NF <b class="mono">${esc(L.nf)}</b>`);
+  if(L.vendedor) meta.push(`Vend. <b>${esc(L.vendedor)}</b>`);
+  if(typeof L.valor==="number") meta.push(`<b>${esc(fmtMoeda(L.valor))}</b>`);
+  if(C.novoCliente) meta.push(`→ <b>${esc(C.novoCliente)}</b>`);
+  else if(C.decisao && C.decisao!==REVENDA) meta.push(`→ <b>${esc(C.decisao)}</b>`);
+  if(O.numero) meta.push(`Ocorr. <b class="mono">${esc(O.numero)}</b>`);
+  return `<button type="button" class="cartao" data-id="${esc(c.id)}" style="--cor:${ET[c.etapa]?ET[c.etapa].cor:"var(--muted)"}">
+    <div class="l1"><span class="cod">${esc(c.codigo||"")}</span>${c.exemplo?'<span class="pill ex">Exemplo</span>':""}${L.motivo?`<span class="motivo">${esc(L.motivo)}</span>`:""}</div>
+    <div class="cli">${esc(L.cliente||"Cliente não informado")}</div>
+    ${meta.length?`<div class="meta">${meta.map(m=>`<span>${m}</span>`).join("")}</div>`:""}
+    <div class="rod">${pillDias(c)}${devs?`<span class="pill crit" title="Devoluções de etapa">↺ ${devs}</span>`:""}${agu?`<span class="pill warn">aguardando</span>`:""}${pr&&pr.txt?`<span class="pill ${pr.cls}" title="${esc(pr.dica)}">${esc(pr.txt)}</span>`:""}${temNF?'<span class="pill">NF anexa</span>':""}${nFotos?`<span class="pill">${nFotos} foto${nFotos>1?"s":""}</span>`:""}${nCom?`<span class="pill">${nCom} coment.</span>`:""}<span>· ${pessoa(c.atualizadoPor)} ${esc(fmtQuando(c.atualizadoEm))}</span></div>
+  </button>`;
+}
+function renderQuadro(){
+  const lista=casosFiltrados();
+  const html=ETAPAS.filter(e=>e.k!=="concluido").map(e=>{
+    let itens=lista.filter(c=>c.etapa===e.k);
+    if(e.k==="concluido") itens.sort((a,b)=>String(b.etapaDesde).localeCompare(String(a.etapaDesde)));
+    else itens.sort((a,b)=>String(a.etapaDesde).localeCompare(String(b.etapaDesde)));
+    const total=itens.length; if(e.k==="concluido") itens=itens.slice(0,40);
+    const minha=setor===e.k;
+    return `<section class="coluna${minha?" minha":""}" style="--cor:${e.cor}" aria-label="${esc(e.nome)}">
+      <div class="col-cab"><div class="l1"><h2>${esc(e.nome)}</h2>${minha?'<span class="tag-fila">Sua fila</span>':""}<span class="qtd">${total}</span></div><p>${esc(e.tarefa)}</p></div>
+      <div class="col-corpo">${itens.length?itens.map(cartao).join(""):`<div class="vazio">${!carregado?"Carregando…":busca?"Nada encontrado":"Nenhum caso nesta etapa"}</div>`}${e.k==="concluido"&&total>40?`<div class="vazio">Mostrando os 40 mais recentes de ${total}. Use a busca ou a Lista.</div>`:""}</div>
+    </section>`;
+  }).join("");
+  const q=$("#quadro"); q.innerHTML=html; resolverNomes(q);
+}
+
+/* ---------- Lista ---------- */
+const COLS_LISTA = [
+  ["Código",c=>c.codigo],["Etapa",c=>ET[c.etapa]?ET[c.etapa].nome:""],["Data devolução",c=>fmtData((c.logistica||{}).dataDevolucao)],["NF",c=>(c.logistica||{}).nf],
+  ["Cliente",c=>(c.logistica||{}).cliente],["CNPJ/CPF",c=>(c.logistica||{}).cnpjCliente],["Motorista",c=>(c.logistica||{}).motorista],["Vendedor",c=>(c.logistica||{}).vendedor],["Motivo",c=>(c.logistica||{}).motivo],["Valor devolvido",c=>fmtMoeda((c.logistica||{}).valor)],
+  ["Destino",c=>(c.comercial||{}).decisao],["Novo cliente",c=>(c.comercial||{}).novoCliente],["Valor revenda",c=>fmtMoeda((c.comercial||{}).preco)],
+  ["Ocorrência",c=>(c.ocorrencia||{}).numero],["E-mail enviado",c=>(c.ocorrencia||{}).emailEnviado?"Sim":""],["Novo pedido",c=>(c.processos||{}).numeroPedido],["Nova NF",c=>(c.processos||{}).novaNf],["Cobrança",c=>(c.processos||{}).cobranca],
+  ["Dias na etapa",c=>c.etapa==="concluido"?"":String(diasDesde(c.etapaDesde))],["Ciclo total",c=>fmtDur(tempoTotal(c,Date.now()))],["Retrabalho",c=>{const n=totalDevolucoes(c); return n?String(n):"";}]
+];
+function linhasLista(){ return casosFiltrados().sort((a,b)=>(IDX[a.etapa]-IDX[b.etapa])||String(a.etapaDesde).localeCompare(String(b.etapaDesde))); }
+function renderLista(){
+  const rows=linhasLista();
+  $("#lista").innerHTML = rows.length ? `<table><thead><tr>${COLS_LISTA.map(c=>`<th>${esc(c[0])}</th>`).join("")}</tr></thead><tbody>${rows.map(c=>`<tr data-id="${esc(c.id)}">${COLS_LISTA.map((col,i)=>i===1?`<td><span class="etq" style="--cor:${ET[c.etapa]?ET[c.etapa].cor:"var(--muted)"}">${esc(col[1](c)||"")}</span></td>`:`<td${["Código","NF","CNPJ/CPF","Ocorrência","Nova NF","Novo pedido"].includes(col[0])?' class="mono"':""}>${esc(col[1](c)||"")}</td>`).join("")}</tr>`).join("")}</tbody></table>` : `<div class="vazio">${carregado?"Nenhum caso encontrado":"Carregando…"}</div>`;
+}
+/* ---------- Acompanhamento caso a caso e finalizados ---------- */
+function finalizadoDe(c){ return !!(c && (c.finalizado || c.etapa === "concluido")); }
+function encerradoEm(c){ return (c && (c.finalizadoEm || c.etapaDesde)) || null; }
+function situacaoDe(c){
+  const ag = aguardandoDe(c);
+  if(ag) return {txt:"Aguardando", cls:"warn", dica:String(ag.motivo || "terceiros")};
+  const d = diasDesde(c.etapaDesde);
+  if(d >= 4) return {txt:"Parada há " + d + " dias", cls:"crit"};
+  if(d >= 2) return {txt:"Parada há " + d + " dias", cls:"warn"};
+  return {txt:"Em andamento", cls:"ok"};
+}
+/* ---------- Prazo por etapa (SLA) e gargalo ---------- */
+let prazos = {logistica:1, comercial:2, ocorrencia:2, processos:2};
+function prazoDaEtapa(s){ const n = Number(prazos[s]); return isFinite(n) && n > 0 ? n : 0; }
+function vencimentoDe(c){
+  if(!c || c.etapa === "concluido") return null;
+  const p = prazoDaEtapa(c.etapa);
+  if(!p) return null;
+  const r = (c.etapas || {})[c.etapa] || {};
+  const ini = msDe(r.entradaEm) || msDe(c.etapaDesde);
+  if(ini == null) return null;
+  return ini + p * 86400000;
+}
+function prazoDe(c){
+  const venc = vencimentoDe(c);
+  if(venc == null) return {txt:"", cls:"", dica:""};
+  const dif = venc - Date.now();
+  const horas = Math.ceil(Math.abs(dif) / 3600000);
+  const dias = dif < 0 ? Math.floor(Math.abs(dif) / 86400000) : Math.ceil(Math.abs(dif) / 86400000);
+  const p = prazoDaEtapa(c.etapa);
+  const dica = "Prazo de " + p + " d em " + (ET[c.etapa] ? ET[c.etapa].nome : "etapa") + " · vence " + fmtDataHora(new Date(venc).toISOString());
+  if(dif < 0) return {txt:(dias >= 1 ? dias + " d de atraso" : horas + " h de atraso"), cls:"crit", dica:dica};
+  if(dif <= 86400000) return {txt:"vence em " + (horas >= 1 ? horas + " h" : "menos de 1 h"), cls:"warn", dica:dica};
+  return {txt:"", cls:"", dica:dica};
+}
+function gargaloDe(){
+  const abertos = casosFiltrados().filter(c => !finalizadoDe(c));
+  const agoraT = Date.now();
+  let melhor = null;
+  for(const s of SECOES){
+    const doSetor = abertos.filter(c => c.etapa === s);
+    if(!doSetor.length) continue;
+    let soma = 0, atrasados = 0;
+    for(const c of doSetor){
+      const r = (c.etapas || {})[s] || {};
+      soma += tempoEtapa(r, agoraT);
+      const v = vencimentoDe(c);
+      if(v != null && v < agoraT) atrasados++;
+    }
+    const media = soma / doSetor.length;
+    if(!melhor || media > melhor.media) melhor = {s:s, media:media, n:doSetor.length, atrasados:atrasados};
+  }
+  return melhor;
+}
+function percursoHTML(c){
+  const e = etapasDe(c), agoraT = Date.now();
+  return SECOES.map(s => {
+    const r = e[s] || {}, st = r.status || "pendente";
+    const cls = st === "concluida" ? "pc-ok" : (st === "ativa" || st === "aguardando") ? (st === "aguardando" ? "pc-agu" : "pc-at") : "pc-pen";
+    const ico = st === "concluida" ? "✓" : (st === "ativa" || st === "aguardando") ? "●" : "·";
+    const dur = tempoEtapa(r, agoraT);
+    const dev = r.devolucoes ? " ↺" + r.devolucoes : "";
+    const dica = ET[s].nome + ": " + st + (dur ? " · " + fmtDur(dur) : "") + (r.aguardando ? " · " + (r.aguardando.motivo || "") : "");
+    return `<span class="pc ${cls}" title="${esc(dica)}">${ico} ${esc(ET[s].nome)}${dur ? " " + esc(fmtDur(dur)) : ""}${dev}</span>`;
+  }).join("");
+}
+function linhasAcomp(){
+  return casosFiltrados().filter(c => !finalizadoDe(c))
+    .filter(c => !filtroEtapa || c.etapa === filtroEtapa)
+    .filter(c => {
+      const d = diasDesde(c.etapaDesde), ag = !!aguardandoDe(c);
+      if(filtroSit === "andamento") return !ag && d < 2;
+      if(filtroSit === "aguardando") return ag;
+      if(filtroSit === "parado2") return !ag && d >= 2;
+      if(filtroSit === "parado4") return !ag && d >= 4;
+      if(filtroSit === "retrabalho") return totalDevolucoes(c) > 0;
+      if(filtroSit === "atrasado"){ const v = vencimentoDe(c); return v != null && v < Date.now(); }
+      if(filtroSit === "vence"){ const v = vencimentoDe(c); return v != null && v >= Date.now() && (v - Date.now()) <= 86400000; }
+      return true;
+    })
+    .sort((a,b) => (IDX[a.etapa] - IDX[b.etapa]) || String(a.etapaDesde).localeCompare(String(b.etapaDesde)));
+}
+function renderAcompanhamento(){
+  const rows = linhasAcomp(); const box = $("#acomp"); if(!box) return;
+  const total = casosFiltrados().filter(c => !finalizadoDe(c)).length;
+  if(!rows.length){
+    const filtrado = (filtroEtapa || filtroSit !== "todas");
+    box.innerHTML = `<div class="vazio">${!carregado ? "Carregando…" : (filtrado ? "Nenhum caso com esses filtros." : "Nenhum caso em andamento.")}</div>`;
+    return;
+  }
+  const g = gargaloDe();
+  const topo = `<div class="acomp-topo">${rows.length === total ? rows.length + (rows.length === 1 ? " caso em andamento" : " casos em andamento") : "Mostrando " + rows.length + " de " + total + " casos"}${g ? " · maior tempo em etapa: " + ET[g.s].nome + " (" + (fmtDur(g.media) || "menos de 1 h") + " de média, " + g.atrasados + " de " + g.n + " fora do prazo)" : ""}</div>`;
+  const corpo = rows.map(c => {
+    const L = c.logistica || {}, s = situacaoDe(c), pr = prazoDe(c), cor = ET[c.etapa] ? ET[c.etapa].cor : "var(--muted)";
+    const agoraT = Date.now();
+    const naEtapa = tempoEtapa((etapasDe(c))[c.etapa], agoraT);
+    const devs = totalDevolucoes(c);
+    return `<tr data-id="${esc(c.id)}">
+      <td><div class="mono">${esc(c.codigo || "")}</div><div class="pe">${esc(L.cliente || "—")}</div><div class="pe">${pessoa(c.atualizadoPor)} · ${esc(fmtQuando(c.atualizadoEm))}</div></td>
+      <td><span class="etq" style="--cor:${cor}">${esc(ET[c.etapa] ? ET[c.etapa].nome : "—")}</span><div class="pe">${esc(fmtDur(naEtapa) || "menos de 1 h")} na etapa · ${esc(fmtDur(tempoTotal(c, agoraT)) || "—")} no total</div>${pr.txt ? `<div class="pe ${pr.cls}" title="${esc(pr.dica)}">${esc(pr.txt)}</div>` : ""}</td>
+      <td><span class="pill ${s.cls}"${s.dica ? ` title="${esc(s.dica)}"` : ""}>${esc(s.txt)}</span>${devs ? ` <span class="pill crit" title="Devoluções de etapa">↺ ${devs}</span>` : ""}</td>
+      <td class="pc-td"><div class="pc-set">${percursoHTML(c)}</div></td>
+    </tr>`;
+  }).join("");
+  box.innerHTML = topo + `<table><thead><tr><th>Caso</th><th>Etapa atual</th><th>Situação</th><th>Percurso</th></tr></thead><tbody>${corpo}</tbody></table>`;
+  resolverNomes(box);
+}
+function percursoTexto(c){
+  const e = etapasDe(c), agoraT = Date.now();
+  return SECOES.map(s => {
+    const r = e[s] || {}, st = r.status || "pendente";
+    const rot = st === "concluida" ? "concluída" : st === "ativa" ? "em andamento" : st === "aguardando" ? "aguardando" : "pendente";
+    const dur = tempoEtapa(r, agoraT);
+    return ET[s].nome + " " + rot + (dur ? " (" + fmtDur(dur) + ")" : "") + (r.devolucoes ? " [devolvida " + r.devolucoes + "x]" : "");
+  }).join(" | ");
+}
+const COLS_ACOMP = [
+  ["Caso", c => c.codigo],
+  ["Cliente", c => (c.logistica || {}).cliente],
+  ["Etapa atual", c => (ET[c.etapa] ? ET[c.etapa].nome : "")],
+  ["Desde", c => fmtData(c.etapaDesde)],
+  ["Dias na etapa", c => String(diasDesde(c.etapaDesde))],
+  ["Tempo total", c => fmtDur(tempoTotal(c, Date.now()))],
+  ["Situação", c => situacaoDe(c).txt],
+  ["Retrabalho", c => { const n = totalDevolucoes(c); return n ? String(n) : ""; }],
+  ["Percurso", c => percursoTexto(c)],
+  ["Último movimento", c => (nomeDe(c.atualizadoPor) || "") + " " + fmtQuando(c.atualizadoEm)]
+];
+const COLS_FIM = [
+  ["Caso", c => c.codigo],
+  ["Desfecho", c => c.desfecho || "Ocorrência concluída"],
+  ["Cliente", c => (c.logistica || {}).cliente],
+  ["NF", c => (c.logistica || {}).nf],
+  ["Motivo", c => (c.logistica || {}).motivo],
+  ["Valor devolvido", c => fmtMoeda((c.logistica || {}).valor)],
+  ["Destino", c => (c.comercial || {}).decisao],
+  ["Encerrado em", c => fmtDataHora(encerradoEm(c))],
+  ["Ciclo total", c => fmtDur(tempoTotal(c, Date.now()))],
+  ["Retrabalho", c => { const n = totalDevolucoes(c); return n ? String(n) : ""; }],
+  ["Encerrado por", c => nomeDe(c.finalizadoPor) || ""]
+];
+function linhasFim(){
+  const corte = periodoFim ? Date.now() - periodoFim * 86400000 : 0;
+  return casosFiltrados().filter(finalizadoDe).filter(c => {
+    if(!corte) return true;
+    const t = msDe(encerradoEm(c));
+    return t == null || t >= corte;
+  }).sort((a,b) => String(encerradoEm(b)).localeCompare(String(encerradoEm(a))));
+}
+function renderFinalizados(){
+  const rows = linhasFim(); const box = $("#fim"); if(!box) return;
+  if(!rows.length){ box.innerHTML = `<div class="vazio">Nenhum caso finalizado no período.</div>`; return; }
+  const corpo = rows.map(c => `<tr data-id="${esc(c.id)}">${COLS_FIM.map((col,i) => `<td class="${i === 0 ? "mono" : ""}">${esc(col[1](c) || "")}</td>`).join("")}</tr>`).join("");
+  box.innerHTML = `<table><thead><tr>${COLS_FIM.map(c => `<th>${esc(c[0])}</th>`).join("")}</tr></thead><tbody>${corpo}</tbody></table>`;
+}
+function trocarVisao(v){
+  visao = v;
+  const alvos = {quadro:"#quadro", lista:"#lista", acomp:"#acomp", fim:"#fim"};
+  for(const k in alvos){ const el = $(alvos[k]); if(el) el.hidden = (k !== v); }
+  const bts = {quadro:"#v-quadro", lista:"#v-lista", acomp:"#v-acomp", fim:"#v-fim"};
+  for(const k in bts){ const b = $(bts[k]); if(b) b.setAttribute("aria-pressed", k === v ? "true" : "false"); }
+  const cop = $("#copiar-tabela"); if(cop) cop.hidden = (v === "quadro");
+  const ff = $("#fim-filtro"); if(ff) ff.hidden = (v !== "fim");
+  const af = $("#acomp-filtros"); if(af) af.hidden = (v !== "acomp");
+  render();
+}
+function render(){ renderResumo(); if(visao==="quadro") renderQuadro(); else if(visao==="lista") renderLista(); else if(visao==="acomp") renderAcompanhamento(); else renderFinalizados(); }
+
+/* ---------- Ficha ---------- */
+function campoHTML(sec,f){
+  if(f.grupo) return `<div class="grupo">${esc(f.grupo)}</div>`;
+  const id=`f-${sec}-${f.k}`; const req=f.req||f.reqSe?` <span class="req" title="Obrigatório para concluir a etapa">*</span>`:"";
+  const w=f.w===2?" w2":"";
+  if(f.t==="check") return `<div class="c${w}" data-campo="${f.k}"><label class="chk" for="${id}"><input type="checkbox" id="${id}"> ${esc(f.l)}${req}</label></div>`;
+  let inp;
+  if(f.t==="select") inp=`<select id="${id}"><option value="">Selecione…</option>${f.opts.map(o=>`<option>${esc(o)}</option>`).join("")}</select>`;
+  else if(f.t==="area") inp=`<textarea id="${id}" rows="2"></textarea>`;
+  else if(f.t==="date") inp=`<input type="date" id="${id}">`;
+  else if(f.t==="datetime") inp=`<input type="datetime-local" id="${id}">`;
+  else if(f.t==="money") inp=`<input type="text" inputmode="decimal" id="${id}" placeholder="0,00" class="num">`;
+  else inp=`<input type="text" id="${id}"${f.mono?' class="mono"':""}>`;
+  return `<div class="c${w}" data-campo="${f.k}"><label for="${id}">${esc(f.l)}${req}</label>${inp}</div>`;
+}
+function lerSecao(sec){
+  const o={};
+  for(const f of CAMPOS[sec]){ if(!f.k) continue; const el=document.getElementById(`f-${sec}-${f.k}`); if(!el) continue;
+    if(f.t==="check") o[f.k]=el.checked; else if(f.t==="money") o[f.k]=lerMoeda(el.value); else o[f.k]=el.value.trim(); }
+  return o;
+}
+function preencherSecao(sec,dados){
+  dados=dados||{};
+  for(const f of CAMPOS[sec]){ if(!f.k) continue; const el=document.getElementById(`f-${sec}-${f.k}`); if(!el) continue; const v=dados[f.k];
+    if(f.t==="check") el.checked=!!v;
+    else if(f.t==="money") el.value=fmtNum(v);
+    else if(f.t==="select"){ const s=v==null?"":String(v); if(s && ![...el.options].some(o=>o.value===s)){ const op=document.createElement("option"); op.textContent=s; el.appendChild(op);} el.value=s; }
+    else el.value=v==null?"":String(v); }
+}
+function validar(sec,d,c){ return CAMPOS[sec].filter(f=>f.k && (f.req||(f.reqSe&&f.reqSe(d,c))) && (f.t==="check"?!d[f.k]:(d[f.k]==null||d[f.k]===""))); }
+/* podeAgir agora vem de acessos/{uid} — ver bloco "Acessos por setor". */
+function temNFAnexa(){ return listaAnexos().some(a=>a.tipo==="nf"); }
+function marcarErros(sec,faltando){
+  document.querySelectorAll(`#sec-${sec} .c`).forEach(c=>c.classList.remove("erro"));
+  faltando.forEach(f=>{ const c=document.querySelector(`#sec-${sec} .c[data-campo="${f.k}"]`); if(c) c.classList.add("erro"); });
+}
+
+function abrirFicha(id){
+  aberto=id; sujo={}; ultimaEtapaFicha=null;
+  $("#veu").classList.add("on"); const f=$("#ficha"); f.classList.add("on");
+  $("#ficha").onchange=null;
+  if(id==="__novo__") montarNovo(); else if(id==="__acessos__") montarAcessos(); else montarFicha();
+  const fc=f.querySelector(".fechar"); if(fc) fc.focus();
+}
+function fecharFicha(){
+  if(Object.values(sujo).some(Boolean) && !$("#ficha").dataset.confirmaFechar){
+    $("#ficha").dataset.confirmaFechar="1"; toast("Há alterações não salvas. Clique em fechar de novo para descartar."); return;
+  }
+  delete $("#ficha").dataset.confirmaFechar;
+  aberto=null; sujo={}; baseEscrita=null; $("#veu").classList.remove("on"); $("#ficha").classList.remove("on"); $("#ficha").innerHTML="";
+}
+
+function montarNovo(){
+  const e=ET.logistica;
+  $("#ficha").innerHTML=`
+  <div class="f-cab"><div class="l1"><div><h2>Nova devolução</h2><div class="sub">O motorista avisou da devolução: confirme o motivo com ele, anexe a NF e as fotos. Ao concluir, o caso vai para o Comercial.</div></div><button class="fechar" type="button" aria-label="Fechar">×</button></div></div>
+  <div class="f-corpo">
+    ${blocoAnexosHTML()}
+    <details class="secao atual" id="sec-logistica" open style="--cor:${e.cor}">
+      <summary><span class="n">1</span><div><h3>Logística</h3><div class="tarefa">${esc(e.tarefa)}</div></div></summary>
+      <div class="sec-corpo"><div class="grade">${CAMPOS.logistica.map(f=>campoHTML("logistica",f)).join("")}</div>
+      <div class="acoes"><div class="dir"><button class="btn" type="button" id="criar-rasc">Salvar na Logística</button><button class="btn pri" type="button" id="criar-env">Registrar e enviar para Comercial</button></div></div></div>
+    </details>
+  </div>`;
+  const dn=new Date(); const agoraLocal=`${hojeYMD()}T${String(dn.getHours()).padStart(2,"0")}:${String(dn.getMinutes()).padStart(2,"0")}`;
+  preencherSecao("logistica",{dataDevolucao:hojeYMD(), informadoEm:agoraLocal, tipo:"Total"});
+  $("#sec-logistica").addEventListener("input",ev=>{ sujo.logistica=true; const c=ev.target.closest(".c"); if(c) c.classList.remove("lido"); });
+  anexosPendentes={}; ligarAnexos(); renderAnexos();
+  $("#criar-rasc").onclick=()=>criarCaso(false);
+  $("#criar-env").onclick=()=>criarCaso(true);
+}
+async function criarCaso(enviar){
+  if(!db){ toast("Sem conexão com o banco do painel.",true); return; }
+  if(!podeCriar()){ toast("Registrar devolução é do setor Logística. Seu acesso é " + (meuAcesso.setores.length ? meuAcesso.setores.map(k => ROTULO_SETOR[k]).join(" / ") : "somente leitura") + ".", true); return; }
+  const d=lerSecao("logistica");
+  const falt=enviar?validar("logistica",d):CAMPOS.logistica.filter(f=>(f.k==="cliente"||f.k==="nf")&&!d[f.k]);
+  marcarErros("logistica",falt);
+  if(falt.length){ toast("Preencha: "+falt.map(f=>f.l).join(", "),true); return; }
+  if(enviar && assets && !temNFAnexa()){ toast("Anexe a nota fiscal antes de enviar para o Comercial.",true); return; }
+  const agora=agoraISO();
+  const acaoInicial=enviar?"Devolução registrada e enviada para Comercial":"Devolução registrada na Logística";
+  const corpo={codigo:novoCodigo(), etapa:enviar?"comercial":"logistica", etapaDesde:agora, etapas:etapasIniciais(enviar, agora), criadoEm:agora, criadoPor:meId, criadoSetor:setor||"logistica", atualizadoEm:agora, atualizadoPor:meId, exemplo:false,
+    logistica:d, comercial:{}, ocorrencia:{}, processos:{}, comentarios:{}, anexos:Object.assign({},anexosPendentes),
+    historico:{[chave()]:{em:agora,por:meId,setor:setor||"logistica",acao:acaoInicial}}};
+  const evInicial=await novoEvento({}, {em:agora, por:meId, setor:setor||"logistica", codigo:"criar", acao:acaoInicial, antes:null, depois:{etapa:corpo.etapa}});
+  corpo.trilha={[chave()]:evInicial};
+  const ref=db.collection("casos").doc();
+  $("#criar-env").disabled=$("#criar-rasc").disabled=true;
+  try{ await enfileirar(()=>ref.set(corpo)); sujo={}; toast(`${corpo.codigo} registrado.`); abrirFicha(ref.id); }
+  catch(e){ tratarErro(e); const b1=$("#criar-env"), b2=$("#criar-rasc"); if(b1) b1.disabled=false; if(b2) b2.disabled=false; }
+}
+
+function montarFicha(){
+  const c=casos.get(aberto); if(!c){ $("#ficha").innerHTML=`<div class="f-cab"><div class="l1"><h2>Caso não encontrado</h2><button class="fechar" type="button" aria-label="Fechar">×</button></div></div>`; return; }
+  $("#ficha").innerHTML=`
+    <div class="f-cab" id="f-cab"></div>
+    <div class="f-corpo">
+      <div class="bloco" id="andamento"><h3>Andamento</h3><div id="and-corpo"></div></div>
+      ${blocoAnexosHTML()}
+      ${SECOES.map((s,i)=>`<details class="secao" id="sec-${s}" style="--cor:${ET[s].cor}">
+        <summary><span class="n">${i+1}</span><div><h3>${esc(ET[s].nome)}</h3><div class="tarefa">${esc(ET[s].tarefa)}</div></div><span class="st" id="st-${s}"></span></summary>
+        <div class="sec-corpo"><div class="aviso-fut" id="fut-${s}" hidden></div>
+          ${s==="processos"?`<div class="anx-botoes"><button class="btn pri" type="button" id="bt-nfnova">Anexar nova NF e boleto</button><input type="file" id="up-nfnova" accept=".xml,.pdf,application/pdf,text/xml,application/xml,image/jpeg,image/png,image/webp" multiple hidden><span class="anx-dica">Selecione a nota e o boleto juntos (segure Ctrl). O painel identifica cada um: a NF preenche pedido, número, chave, data e valor; o boleto preenche linha digitável e vencimento.</span></div><div class="anx-status" id="fat-status" hidden></div>`:""}
+          <fieldset class="trava" id="fs-${s}"><div class="grade">${CAMPOS[s].map(f=>campoHTML(s,f)).join("")}</div></fieldset>
+          ${s==="processos"?`<div class="email" id="resumo-box"><div class="t">Prévia do resumo final <span class="espaco"></span><button class="btn peq" type="button" id="copiar-resumo">Copiar resumo</button><button class="btn peq" type="button" id="enviar-resumo" hidden>Enviar sem anexos</button><button class="btn peq pri" type="button" id="rasc-resumo" hidden>Criar e-mail com anexos no Outlook</button></div><div class="anx-email" id="anx-res"></div><textarea id="resumo-txt" readonly aria-label="Prévia do resumo final"></textarea><div class="sub" id="resumo-info"></div></div>`:""}
+          
+          ${s==="ocorrencia"?`<div class="email"><div class="t">E-mail da ocorrência <span class="espaco"></span><button class="btn peq" type="button" id="copiar-email">Copiar e-mail</button><button class="btn peq" type="button" id="enviar-oco" hidden>Enviar sem anexos</button><button class="btn peq pri" type="button" id="rasc-oco" hidden>Criar e-mail com anexos no Outlook</button></div><div class="anx-email" id="anx-oco"></div><textarea id="email-txt" readonly aria-label="Texto do e-mail da ocorrência"></textarea><div id="oco-info"></div></div>`:""}
+          <div class="acoes" id="ac-${s}"></div>
+        </div></details>`).join("")}
+      <div class="bloco"><h3>Conversa do caso</h3><div class="msgs" id="msgs"></div>
+        <div class="novo-msg"><textarea id="msg-txt" placeholder="Escreva para os outros setores (substitui o WhatsApp)…" aria-label="Novo comentário"></textarea><button class="btn pri" type="button" id="msg-env">Enviar</button></div></div>
+      <div class="bloco"><h3>Histórico</h3><ul class="hist" id="hist"></ul></div>
+    </div>
+    <div class="f-rod" id="f-rod"></div>`;
+  for(const s of SECOES){
+    preencherSecao(s,c[s]);
+    const sec=$("#sec-"+s);
+    sec.addEventListener("input",ev=>{ sujo[s]=true; const cc=ev.target.closest(".c"); if(cc) cc.classList.remove("lido"); atualizarEmail(); });
+    sec.addEventListener("change",()=>{ sujo[s]=true; atualizarEmail(); });
+  }
+  ligarAnexos();
+  $("#bt-nfnova").onclick=()=>$("#up-nfnova").click();
+  $("#up-nfnova").onchange=e=>{ const fs=[...e.target.files]; e.target.value=""; if(fs.length) onDocsProcessos(fs); };
+  $("#copiar-email").onclick=copiarEmail;
+  $("#enviar-oco").onclick=enviarOcorrencia;
+  $("#rasc-oco").onclick=prepararOcorrencia;
+  $("#ficha").addEventListener("change",ev=>{ const cb=ev.target.closest("input[data-box]"); if(cb){ selAnx[cb.dataset.box][cb.dataset.k]=cb.checked; } });
+  $("#copiar-resumo").onclick=copiarResumo;
+  $("#rasc-resumo").onclick=()=>enviarResumo(true);
+  $("#enviar-resumo").onclick=()=>enviarResumo(false);
+  defaultsProcessos(c);
+  $("#msg-env").onclick=enviarComentario;
+  $("#msg-txt").addEventListener("keydown",e=>{ if(e.key==="Enter"&&(e.ctrlKey||e.metaKey)){ e.preventDefault(); enviarComentario(); } });
+  atualizarFicha(true);
+}
+
+function atualizarFicha(inicial){
+  if(aberto==="__acessos__"){ montarAcessos(); return; }
+  const c=casos.get(aberto); if(!c) return;
+  const iAt=IDX[c.etapa]; const e=ET[c.etapa]||ETAPAS[0]; const L=c.logistica||{};
+  const mudouEtapa=ultimaEtapaFicha!==c.etapa; ultimaEtapaFicha=c.etapa;
+  $("#f-cab").innerHTML=`<div class="l1"><div><div class="sub mono">${esc(c.codigo||"")}${c.exemplo?" · exemplo":""}</div><h2>${esc(L.cliente||"Cliente não informado")}</h2>
+      <div class="sub">NF <span class="mono">${esc(L.nf||"—")}</span> · ${esc(L.motivo||"motivo não informado")} · ${esc(fmtMoeda(L.valor)||"valor não informado")}</div></div>
+      <button class="fechar" type="button" aria-label="Fechar">×</button></div>
+    <div class="trilha">${ETAPAS.map((x,i)=>`<div class="${i<iAt?"feito":i===iAt?"atual":""}" style="--cor:${x.cor}">${esc(x.nome)}</div>`).join("")}</div>
+    <div class="sub">${c.etapa==="concluido"?`Situação: <b style="color:${e.cor}">Ocorrência concluída</b>`:`Etapa atual: <b style="color:${e.cor}">${esc(e.nome)}</b>`} · ${pillDias(c)}</div>`;
+  for(const s of SECOES){
+    const i=IDX[s]; const sec=$("#sec-"+s);
+    sec.classList.toggle("atual",i===iAt);
+    if(mudouEtapa) sec.open = i===iAt || (c.etapa==="concluido" && s==="processos");
+    const fut=$("#fut-"+s), pa=podeAgir(s), editavel = i===iAt && pa.ok;
+    $("#fs-"+s).disabled = !editavel;
+    fut.classList.toggle("bloq", i>iAt);
+    if(i>iAt){ fut.hidden=false; fut.textContent=`Bloqueada. Esta etapa só abre depois que ${ETAPAS[i-1].nome} concluir a dela.`; }
+    else if(i<iAt){ fut.hidden=false; fut.textContent=`Etapa concluída: somente leitura. Se algo estiver errado, o setor da etapa atual devolve o caso para correção.`; }
+    else fut.hidden=true;
+    if(s==="processos"){ const b=$("#bt-nfnova"); if(b) b.disabled=!editavel; }
+    $("#st-"+s).innerHTML = i<iAt?'<span class="pill ok">Concluída</span>':i===iAt?`<span class="pill" style="color:${ET[s].cor};border-color:${ET[s].cor}">Em andamento</span>`:'<span class="pill">Bloqueada</span>';
+    if(!sujo[s] && !inicial){ preencherSecao(s,c[s]); if(s==="processos") defaultsProcessos(c); }
+    montarAcoes(s,c);
+  }
+  ["#enviar-oco","#rasc-oco"].forEach(q=>{ const b=$(q); if(b){ b.hidden=!mcp; b.disabled=!(c.etapa==="ocorrencia" && setor==="ocorrencia"); } });
+  mostrarPasso($("#oco-info"), (ultimoRascunho[aberto]||{}).oco);
+  const podeResumo = (c.etapa==="processos"||c.etapa==="concluido") && setor==="processos";
+  ["#enviar-resumo","#rasc-resumo"].forEach(q=>{ const b=$(q); if(b){ b.hidden=!mcp; b.disabled=!podeResumo; } });
+  $("#resumo-box").hidden = IDX[c.etapa] < IDX.processos;
+  const P=c.processos||{}; const ri=$("#resumo-info");
+  const rr=(ultimoRascunho[aberto]||{}).res;
+  if(rr) mostrarPasso(ri, rr);
+  else ri.textContent = P.resumoEnviadoEm ? `Resumo enviado em ${fmtDataHora(P.resumoEnviadoEm)} para ${P.resumoEnviadoPara||""}` : P.resumoPreparadoEm ? `Resumo preparado no Outlook em ${fmtDataHora(P.resumoPreparadoEm)} para ${P.resumoPreparadoPara||""}` : (mcp?"Com anexos: o e-mail fica pronto nos seus Rascunhos do Outlook e os arquivos são baixados para você anexar. Sem anexos: sai direto.":"Envio pelo Outlook indisponível nesta visualização: use Copiar resumo e cole no Outlook.");
+  carregarNomes(c).then(atualizarResumo);
+  atualizarEmail();
+  renderAnexos();
+  const aca=$("#and-corpo"); if(aca) aca.innerHTML=andamentoCorpo(c);
+  // comentários
+  const coms=Object.entries(c.comentarios||{}).map(([k,v])=>v).filter(v=>v&&typeof v==="object").sort((a,b)=>String(a.em).localeCompare(String(b.em)));
+  $("#msgs").innerHTML = coms.length?coms.map(m=>`<div class="msg"><img alt="" data-av="${esc(m.por||"")}" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28'%3E%3Ccircle cx='14' cy='14' r='14' fill='%238896a8'/%3E%3C/svg%3E"><div><div class="q"><b>${pessoa(m.por)}</b>${m.setor&&ET[m.setor]?`<span class="chip-setor" style="--cor:${ET[m.setor].cor}">${esc(ET[m.setor].nome)}</span>`:""}<span>${esc(fmtQuando(m.em))}</span></div><p>${esc(m.texto)}</p></div></div>`).join(""):'<div class="vazio">Nenhum comentário ainda. Use este espaço em vez do WhatsApp para que tudo fique registrado no caso.</div>';
+  const hist=Object.values(c.historico||{}).filter(v=>v&&typeof v==="object").sort((a,b)=>String(b.em).localeCompare(String(a.em)));
+  $("#hist").innerHTML = hist.map(h=>`<li><time>${esc(fmtQuando(h.em))}</time><span>${h.setor&&ET[h.setor]?`<span class="chip-setor" style="--cor:${ET[h.setor].cor}">${esc(ET[h.setor].nome)}</span> · `:""}<b>${pessoa(h.por)}</b>: ${esc(h.acao)}</span></li>`).join("") || '<li class="vazio">Sem registros.</li>';
+  $("#f-rod").innerHTML=`<span>Criado ${esc(fmtQuando(c.criadoEm))} por ${pessoa(c.criadoPor)} · última alteração ${esc(fmtQuando(c.atualizadoEm))} por ${pessoa(c.atualizadoPor)}</span><span class="espaco"></span>${meuAcesso.gestor?'<button class="btn peq perigo" type="button" id="excluir">Excluir caso</button>':""}`;
+  const ex=$("#excluir"); if(ex) ex.onclick=excluirCaso;
+  resolverNomes($("#ficha"));
+  const rod=$("#f-rod");
+  if(rod){
+    const selo=document.createElement("span");
+    selo.id="selo-trilha"; selo.className="pill"; selo.textContent="Conferindo trilha…";
+    rod.appendChild(selo);
+  }
+  const idAberto=aberto;
+  conferirTrilha(c).then(r=>{
+    if(aberto!==idAberto) return;
+    const el=$("#selo-trilha"); if(!el) return;
+    el.className="pill "+(r.ok?(r.n?"ok":""):"crit");
+    el.textContent=r.ok?(r.n?("Trilha íntegra · "+r.n+(r.n===1?" evento":" eventos")):"Sem eventos de auditoria"):("Trilha com divergência: "+r.motivo);
+    el.title=r.ok?"Cada alteração registrada com usuário, setor e hash encadeado.":"Algo foi alterado fora do fluxo. Avise o responsável.";
+  });
+  marcarBase();
+}
+
+function montarAcoes(s,c){
+  const iAt=IDX[c.etapa], i=IDX[s]; const box=$("#ac-"+s);
+  if(!box) return;
+  if(box.querySelector(".motivo-volta")) return; // não apagar o campo de motivo enquanto é digitado
+  const pa=podeAgir(s);
+  const ativo=(i===iAt && i<SECOES.length);
+  let html="";
+  if(ativo){
+    if(!pa.ok){
+      box.innerHTML=`<span class="nota-setor"></span>`;
+      if(box.firstChild) box.firstChild.textContent=pa.msg;
+      box.onclick=null;
+      return;
+    }
+    const prox=ETAPAS[i+1];
+    const ag=recAguardando(c,s);
+    const espera = ag
+      ? `<span class="nota-setor">Aguardando: ${esc(ag.motivo||"")} · desde ${esc(fmtQuando(ag.em))}</span><button class="btn" type="button" data-a="retomar">Retomar</button>`
+      : `<button class="btn" type="button" data-a="aguardar">Aguardando terceiros</button>`;
+    const esq = i>0 ? `<button class="btn" type="button" data-a="voltar">Devolver para…</button>` : "";
+    html = `${esq}<div class="dir">${espera}<button class="btn" type="button" data-a="salvar">Salvar rascunho</button><button class="btn pri" type="button" data-a="avancar">${s==="processos"?"Concluir e encerrar caso":"Concluir e enviar para "+esc(prox.nome)}</button></div>`;
+  }
+  if(s==="processos" && c.etapa==="concluido" && meuAcesso.gestor){
+    html = `<select id="reabrir-em" aria-label="Reabrir em">${SECOES.map(k=>`<option value="${k}">${ET[k].nome}</option>`).join("")}</select><div class="dir"><button class="btn" type="button" data-a="reabrir">Reabrir caso</button></div>`;
+  }
+  box.innerHTML=html;
+  if(!html){ box.onclick=null; return; }
+  box.onclick=ev=>{
+    const b=ev.target.closest("button[data-a]"); if(!b) return;
+    const a=b.dataset.a;
+    if(a==="salvar") salvarSecao(s);
+    else if(a==="avancar") avancar(s);
+    else if(a==="reabrir") reabrir();
+    else if(a==="voltar") pedirMotivoVolta(s);
+    else if(a==="aguardar") aguardarEtapa(s);
+    else if(a==="retomar") retomarEtapa(s);
+  };
+}
+
+function tratarErro(e){
+  const code=e&&e.code;
+  if(code==="negado"||code==="conflito") return;   // já avisado no ponto da tentativa
+  if(code==="invalid_argument"){ podeEscrever=false; toast("Não foi possível salvar: seu acesso a este painel é só de leitura. Peça ao responsável acesso de Colaborador.",true); }
+  else if(code==="quota_exceeded") toast("O painel atingiu o limite de armazenamento. Exclua casos antigos para continuar.",true);
+  else toast("Não foi possível salvar agora. Tente de novo em instantes.",true);
+}
+/* ---------- Guarda de escrita, concorrência e trilha ---------- */
+const META_LIVRE = new Set(["resumoEnviadoEm","resumoEnviadoPara","resumoPreparadoEm","resumoPreparadoPara","emailEnviadoEm","emailEnviado"]);
+const ZERO_H = "000000000000000000000000";
+const secoesDoPatch = p => SECOES.filter(s => p[s] && typeof p[s] === "object" && !Array.isArray(p[s]));
+
+function diffSecao(antes, depois){
+  const a = antes || {}, out = {};
+  const corta = v => (typeof v === "string" ? v.slice(0,160) : v);
+  for(const k of Object.keys(depois || {})){
+    if(JSON.stringify(a[k]) === JSON.stringify(depois[k])) continue;
+    out[k] = {de: corta(a[k] === undefined ? null : a[k]), para: corta(depois[k])};
+  }
+  return out;
+}
+
+function autorizarEscrita(c, patch, codigo){
+  if(!podeEscrever) return "Seu acesso a este painel é somente leitura.";
+  if(!meuAcesso.setores.length) return "Seu usuário ainda não tem setor liberado. Peça a um gestor na tela Acessos.";
+  for(const s of secoesDoPatch(patch)){
+    const campos = Object.keys(patch[s]);
+    const permitidos = new Set(CAMPOS[s].filter(f => f.k).map(f => f.k));
+    const fora = campos.filter(k => !permitidos.has(k) && !META_LIVRE.has(k));
+    if(fora.length) return "Campo não previsto em " + ROTULO_SETOR[s] + ": " + fora.join(", ") + ".";
+    if(codigo === "avancar" && patch.etapa === s && campos.every(k => (SEMENTE[s] || []).indexOf(k) >= 0)) continue;
+    if(campos.every(k => META_LIVRE.has(k))){
+      if(!meuAcesso.setores.includes(s) || IDX[c.etapa] < IDX[s]) return "Só " + ROTULO_SETOR[s] + " atualiza esses registros.";
+      continue;
+    }
+    if(c.etapa !== s) return "A etapa " + ROTULO_SETOR[s] + " não está aberta: o caso está em " + ROTULO_SETOR[c.etapa] + ".";
+    const pa = podeAgir(s); if(!pa.ok) return pa.msg;
+  }
+  if(patch.etapas){
+    if(["avancar","devolver","reabrir","aguardar"].indexOf(codigo) < 0) return "Mudança de andamento só pelo fluxo do processo.";
+    if(codigo === "reabrir"){
+      if(!meuAcesso.gestor) return "Só um gestor reabre um caso encerrado.";
+    } else {
+      const pa = podeAgir(c.etapa); if(!pa.ok) return pa.msg;
+    }
+    const proj = etapaAtual({etapas:patch.etapas});
+    if(proj !== (patch.etapa || c.etapa)) return "O andamento gravado não corresponde à etapa informada.";
+  }
+  if("finalizado" in patch){
+    const okFim = (codigo === "avancar" && patch.etapa === "concluido") || (codigo === "reabrir" && meuAcesso.gestor);
+    if(!okFim) return "O encerramento do caso só acontece ao concluir Processos.";
+  }
+  if(patch.etapa && patch.etapa !== c.etapa){
+    if(codigo === "reabrir"){
+      if(!meuAcesso.gestor) return "Só um gestor reabre um caso encerrado.";
+      if(SECOES.indexOf(patch.etapa) < 0) return "Etapa de reabertura inválida.";
+    } else {
+      if(codigo !== "avancar" && codigo !== "devolver") return "Mudança de etapa só pelo fluxo: concluir a etapa ou devolver para outra etapa.";
+      const pa = podeAgir(c.etapa); if(!pa.ok) return pa.msg;
+      if(codigo === "avancar"){
+        const prox = ETAPAS[IDX[c.etapa] + 1];
+        if(!prox || patch.etapa !== prox.k) return "Só é possível avançar para a próxima etapa.";
+      } else if(!(IDX[patch.etapa] < IDX[c.etapa])){
+        return "Só é possível devolver para uma etapa anterior.";
+      }
+    }
+  }
+  if(patch.anexos){
+    for(const k of Object.keys(patch.anexos)){
+      const novo = patch.anexos[k], velho = (c.anexos || {})[k];
+      const dono = TIPOS_PROC.has((novo && novo.tipo) || (velho && velho.tipo)) ? "processos" : "logistica";
+      if(!meuAcesso.setores.includes(dono)) return "Só " + ROTULO_SETOR[dono] + " mexe nesses arquivos.";
+      if(c.etapa !== dono) return "Arquivos de " + ROTULO_SETOR[dono] + " só podem ser alterados na etapa dele.";
+    }
+  }
+  if(codigo === "excluir" && !meuAcesso.gestor) return "Só um gestor exclui casos.";
+  return null;
+}
+
+async function hashTexto(t){
+  try{
+    const b = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(t));
+    return [...new Uint8Array(b)].slice(0,12).map(x => x.toString(16).padStart(2,"0")).join("");
+  }catch(e){
+    let h = 2166136261;
+    for(let i = 0; i < t.length; i++){ h ^= t.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
+    return ("00000000" + h.toString(16)).slice(-8);
+  }
+}
+const eventosTrilha = c => Object.entries(c.trilha || {})
+  .filter(([,e]) => e && typeof e === "object" && e.seq != null)
+  .map(([id,e]) => Object.assign({id:id}, e))
+  .sort((a,b) => a.seq - b.seq);
+const corpoEvento = e => JSON.stringify([e.seq,e.em,e.por,e.setor,e.codigo,e.acao,e.antes||null,e.depois||null]);
+
+async function novoEvento(c, base){
+  const l = eventosTrilha(c), ult = l[l.length-1] || null;
+  const e = Object.assign({}, base, {seq:(ult ? ult.seq : 0) + 1, hp: ult ? ult.h : ZERO_H});
+  e.h = await hashTexto(e.hp + "|" + corpoEvento(e));
+  return e;
+}
+
+async function conferirTrilha(c){
+  const l = eventosTrilha(c);
+  let hp = ZERO_H, esperado = 1;
+  for(const e of l){
+    if(e.seq !== esperado) return {ok:false, n:l.length, motivo:"evento " + e.seq + " fora de sequência"};
+    if(e.hp !== hp) return {ok:false, n:l.length, motivo:"elo perdido no evento " + e.seq};
+    if((await hashTexto(hp + "|" + corpoEvento(e))) !== e.h) return {ok:false, n:l.length, motivo:"conteúdo do evento " + e.seq + " não confere"};
+    hp = e.h; esperado++;
+  }
+  return {ok:true, n:l.length, cabeca:hp};
+}
+
+let baseEscrita = null;
+const assinatura = c => JSON.stringify([c.etapa, c.logistica||{}, c.comercial||{}, c.ocorrencia||{}, c.processos||{}]);
+function marcarBase(){
+  if(Object.values(sujo).some(Boolean)) return;
+  const c = casos.get(aberto);
+  baseEscrita = c ? {id:aberto, etapa:c.etapa, assinatura:assinatura(c)} : null;
+}
+
+async function gravar(patch, rotulo, setorAcao, codigo){
+  const id = aberto, c = casos.get(id);
+  if(!c || !db) throw {code:"sem_caso"};
+  const cod = codigo || "salvar";
+  const negado = autorizarEscrita(c, patch, cod);
+  if(negado){ toast(negado, true); throw {code:"negado"}; }
+  if(cod !== "comentar" && cod !== "anexo" && baseEscrita && baseEscrita.id === id && baseEscrita.assinatura !== assinatura(c)){
+    toast((nomeDe(c.atualizadoPor) || "Outra pessoa") + " alterou este caso enquanto você editava. Nada foi salvo. Feche e reabra a ficha para ver a versão atual.", true);
+    throw {code:"conflito"};
+  }
+  const agora = agoraISO();
+  const antes = {etapa:c.etapa}, depois = {etapa: patch.etapa || c.etapa};
+  for(const s of secoesDoPatch(patch)){
+    const d = diffSecao(c[s], patch[s]), ks = Object.keys(d);
+    if(!ks.length) continue;
+    antes[s] = {}; depois[s] = {};
+    for(const k of ks){ antes[s][k] = d[k].de; depois[s][k] = d[k].para; }
+  }
+  const ev = await novoEvento(c, {em:agora, por:meId, setor:setorAcao || setor || "", codigo:cod, acao:rotulo || "", antes:antes, depois:depois});
+  const corpo = Object.assign({}, patch, {atualizadoEm:agora, atualizadoPor:meId, trilha:{[chave()]:ev}});
+  if(rotulo) corpo.historico = {[chave()]:{em:agora, por:meId, setor:setorAcao || setor || "", acao:rotulo}};
+  await enfileirar(() => db.doc("casos/" + id).update(corpo));
+  const fundido = Object.assign({}, c, patch);
+  for(const mapa of ["trilha","historico","comentarios","anexos"]) fundido[mapa] = Object.assign({}, c[mapa] || {}, patch[mapa] || {});
+  const atualizado = normalizarCaso(fundido);
+  casos.set(id, atualizado);
+  if(aberto === id) baseEscrita = {id:id, etapa:atualizado.etapa, assinatura:assinatura(atualizado)};
+}
+function etapaLiberada(s){ const c=casos.get(aberto); if(!c||c.etapa!==s){ toast("Esta etapa não está aberta para edição.",true); return false; } const pa=podeAgir(s); if(!pa.ok){ toast(pa.msg,true); return false; } return true; }
+async function salvarSecao(s){
+  if(!etapaLiberada(s)) return;
+  const d=lerSecao(s); marcarErros(s,[]);
+  try{ await gravar({[s]:d}, `${ET[s].nome}: dados atualizados`, s, "salvar"); sujo[s]=false; toast(`${ET[s].nome} salvo.`); }catch(e){ tratarErro(e); }
+}
+async function avancar(s){
+  const c=casos.get(aberto); if(!c || !etapaLiberada(s)) return;
+  const d=lerSecao(s); const falt=validar(s,d,c); marcarErros(s,falt);
+  if(falt.length){ toast("Para concluir, preencha: "+falt.map(f=>f.l).join(", "),true); return; }
+  if(s==="logistica" && assets && !temNFAnexa()){ toast("Anexe a nota fiscal antes de enviar para o Comercial.",true); return; }
+  if(s==="processos" && d.resumoEnviar){
+    if(!mcp){ toast('O Outlook não está disponível aqui. Use "Copiar resumo", envie pelo Outlook e desmarque "Preparar o e-mail de resumo" para encerrar.',true); return; }
+    const comAnexos=anexosEscolhidos("res").length>0;
+    const ok=await enviarResumo(comAnexos); if(!ok){ toast('O caso não foi encerrado porque o e-mail de resumo não foi preparado. Corrija o problema ou desmarque "Preparar o e-mail de resumo" para encerrar sem e-mail.',true); return; }
+  }
+  const agora=agoraISO();
+  const t=transAvancar(c, agora);
+  if(!t){ toast("Não consegui identificar a etapa atual do caso.",true); return; }
+  const acao = t.etapa==="concluido" ? "Processos concluído. Caso encerrado" : `${ET[s].nome} concluída. Enviado para ${ET[t.etapa].nome}`;
+  const patch={[s]:d, etapas:t.mapa, etapa:t.etapa, etapaDesde:t.etapaDesde};
+  if(t.etapa==="ocorrencia"){ const o=c.ocorrencia||{}; if(!o.dataAbertura) patch.ocorrencia={dataAbertura:hojeYMD()}; }
+  if(t.etapa==="concluido"){ patch.finalizado=true; patch.finalizadoEm=agora; patch.finalizadoPor=meId; patch.desfecho="Ocorrência concluída"; }
+  try{ await gravar(patch, acao, s, "avancar"); sujo[s]=false; toast(acao+"."); }catch(e){ tratarErro(e); }
+}
+async function aguardarEtapa(s){
+  const box=$("#ac-"+s); if(!box) return;
+  box.innerHTML=`<div class="motivo-volta"><input type="text" id="ag-${s}" placeholder="Aguardando o quê? (retorno do cliente, coleta, crédito…)" aria-label="Motivo da espera"><button class="btn" type="button" id="ag-ok">Marcar aguardando</button><button class="btn" type="button" id="ag-x">Cancelar</button></div>`;
+  box.onclick=null;
+  const inp=$("#ag-"+s); if(inp) inp.focus();
+  $("#ag-x").onclick=()=>{ box.innerHTML=""; montarAcoes(s,casos.get(aberto)); };
+  $("#ag-ok").onclick=async()=>{
+    const el=$("#ag-"+s); const m=el?el.value.trim():"";
+    if(!m){ toast("Descreva o que está sendo aguardado.",true); return; }
+    const c=casos.get(aberto); const agora=agoraISO();
+    const t=transAguardar(c, m, agora);
+    if(!t){ toast("Não consegui marcar a espera.",true); return; }
+    try{ await gravar({etapas:t.mapa, etapa:t.etapa, etapaDesde:t.etapaDesde}, `Aguardando: ${m}`, s, "aguardar"); toast("Caso marcado como aguardando."); }catch(e){ tratarErro(e); }
+  };
+}
+async function retomarEtapa(s){
+  const c=casos.get(aberto); const agora=agoraISO();
+  const t=transRetomar(c, agora);
+  if(!t){ toast("Este caso não está aguardando.",true); return; }
+  try{ await gravar({etapas:t.mapa, etapa:t.etapa, etapaDesde:t.etapaDesde}, "Espera encerrada", s, "aguardar"); toast("Espera encerrada."); }catch(e){ tratarErro(e); }
+}
+
+function pedirMotivoVolta(s){
+  const box=$("#ac-"+s); const c=casos.get(aberto); if(!box||!c) return;
+  const iAt=SECOES.indexOf(c.etapa);
+  const anteriores=SECOES.slice(0, iAt);
+  if(!anteriores.length) return;
+  box.innerHTML=`<div class="motivo-volta"><select id="mv-alvo" aria-label="Devolver para o setor">${anteriores.map(k=>`<option value="${k}">${ET[k].nome}</option>`).join("")}</select><input type="text" id="mv-${s}" placeholder="Motivo da devolução (obrigatório)" aria-label="Motivo"><button class="btn" type="button" id="mv-ok">Devolver</button><button class="btn" type="button" id="mv-x">Cancelar</button></div>`;
+  box.onclick=null;
+  const inp=$("#mv-"+s); if(inp) inp.focus();
+  $("#mv-x").onclick=()=>{ box.innerHTML=""; montarAcoes(s,casos.get(aberto)); };
+  $("#mv-ok").onclick=async()=>{
+    const sel=$("#mv-alvo"); const alvo=sel?sel.value:"";
+    const el=$("#mv-"+s); const m=el?el.value.trim():"";
+    if(!m){ toast("Informe o motivo para devolver a etapa.",true); return; }
+    const c2=casos.get(aberto); const agora=agoraISO();
+    const t=transDevolver(c2, alvo, agora);
+    if(!t){ toast("Não é possível devolver para essa etapa.",true); return; }
+    const acao=`Devolvido de ${ET[s].nome} para ${ET[alvo].nome}: ${m}`;
+    const patch={etapas:t.mapa, etapa:t.etapa, etapaDesde:t.etapaDesde, comentarios:{[chave()]:{em:agora,por:meId,setor:setor||s,texto:`Devolvido para ${ET[alvo].nome}: ${m}`}}};
+    try{ await gravar(patch, acao, s, "devolver");
+      box.innerHTML=""; const c3=casos.get(aberto); if(c3) montarAcoes(s,c3); toast(`Caso devolvido para ${ET[alvo].nome}.`);
+    }catch(e){ tratarErro(e); }
+  };
+}
+async function reabrir(){
+  if(!meuAcesso.gestor){ toast("Só um gestor reabre um caso encerrado.",true); return; }
+  const sel=$("#reabrir-em"); const alvo=sel?sel.value:"processos";
+  const c=casos.get(aberto); const agora=agoraISO();
+  const t=transReabrir(c, alvo, agora);
+  if(!t){ toast("Não é possível reabrir nessa etapa.",true); return; }
+  try{ await gravar({etapas:t.mapa, etapa:t.etapa, etapaDesde:t.etapaDesde, finalizado:false, finalizadoEm:null, finalizadoPor:null, desfecho:null}, `Caso reaberto em ${ET[alvo].nome}`, alvo, "reabrir"); }catch(e){ tratarErro(e); }
+}
+async function excluirCaso(){
+  if(!meuAcesso.gestor){ toast("Só um gestor exclui casos.",true); return; }
+  const b=$("#excluir"); if(!b) return;
+  if(!b.dataset.conf){ b.dataset.conf="1"; b.textContent="Confirmar exclusão"; return; }
+  const cod=(casos.get(aberto)||{}).codigo||"";
+  try{ await gravar({excluido:true}, `Caso excluído (gestor) — ${cod}`, setor||"", "excluir"); sujo={}; fecharFicha(); toast(`${cod} excluído.`); }catch(e){ tratarErro(e); }
+}
+async function enviarComentario(){
+  const t=$("#msg-txt"); const texto=t.value.trim(); if(!texto) return;
+  const agora=agoraISO(); const b=$("#msg-env"); b.disabled=true;
+  try{ await gravar({comentarios:{[chave()]:{em:agora,por:meId,setor:setor||"",texto}}}, null, null, "comentar"); t.value=""; }catch(e){ tratarErro(e); }
+  b.disabled=false;
+}
+
+/* ---------- Anexos: nota fiscal e fotos ---------- */
+const TIPOS_PROC=new Set(["nfnova","boleto","faturamento"]);
+function rotuloAnexo(t){ return t==="foto"?"Foto":t==="nfnova"?"Nova NF":t==="boleto"?"Boleto":t==="faturamento"?"Nova NF / boleto":"NF devolvida"; }
+function blocoAnexosHTML(){
+  return `<div class="bloco" id="anexos"><h3>Nota fiscal e fotos</h3>
+    <div class="anx-botoes">
+      <button class="btn pri" type="button" id="bt-nf">Anexar nota fiscal</button><input type="file" id="up-nf" accept=".xml,.pdf,application/pdf,text/xml,application/xml,image/jpeg,image/png,image/webp" hidden>
+      <button class="btn" type="button" id="bt-foto">Adicionar fotos</button><input type="file" id="up-foto" accept="image/jpeg,image/png,image/webp" multiple hidden>
+      <span class="anx-dica">Só a Logística anexa, durante a etapa dela. XML da NF-e preenche os dados na hora. PDF ou foto da DANFE: o Claude lê e preenche (confira antes de salvar).</span>
+    </div>
+    <div class="anx-status" id="anx-status" hidden></div>
+    <div class="anx-docs" id="anx-docs"></div>
+    <div class="anx-fotos" id="anx-fotos"></div>
+  </div>`;
+}
+function ligarAnexos(){
+  $("#bt-nf").onclick=()=>$("#up-nf").click();
+  $("#bt-foto").onclick=()=>$("#up-foto").click();
+  $("#up-nf").onchange=e=>{ const f=e.target.files[0]; e.target.value=""; if(f) onNF(f); };
+  $("#up-foto").onchange=e=>{ const fs=[...e.target.files]; e.target.value=""; if(fs.length) onFotos(fs); };
+  $("#anexos").addEventListener("click",ev=>{ const b=ev.target.closest("button[data-rm]"); if(b) removerAnexo(b.dataset.rm); });
+}
+function listaAnexos(){
+  const src = aberto==="__novo__" ? anexosPendentes : ((casos.get(aberto)||{}).anexos||{});
+  return Object.entries(src).filter(([k,a])=>a&&typeof a==="object"&&typeof a.id==="string"&&/^[A-Za-z0-9_-]+$/.test(a.id)).map(([k,a])=>({k,...a})).sort((a,b)=>String(a.em).localeCompare(String(b.em)));
+}
+function renderAnexos(){
+  const box=$("#anx-docs"); if(!box) return;
+  const l=listaAnexos(); const docs=l.filter(a=>a.tipo!=="foto"), fotos=l.filter(a=>a.tipo==="foto");
+  const etapaAtual = aberto==="__novo__" ? "logistica" : ((casos.get(aberto)||{}).etapa);
+  const pode = k => etapaAtual===k && setor===k;
+  const podeLog = pode("logistica") && !!assets;
+  const bn=$("#bt-nf"), bfo=$("#bt-foto"); if(bn) bn.disabled=!podeLog; if(bfo) bfo.disabled=!podeLog;
+  const rmOk = a => pode(TIPOS_PROC.has(a.tipo)?"processos":"logistica");
+  box.innerHTML=docs.map(a=>`<div class="anx-doc"><span class="tp">${esc(rotuloAnexo(a.tipo).toUpperCase())}</span><a href="/_blob/${esc(a.id)}" target="_blank" rel="noopener">${esc(a.nome||"Nota fiscal")}</a><span class="q">${pessoa(a.por)} · ${esc(fmtQuando(a.em))}</span>${rmOk(a)?`<button class="rm" type="button" data-rm="${esc(a.k)}" aria-label="Remover anexo">×</button>`:""}</div>`).join("");
+  $("#anx-fotos").innerHTML=fotos.map(a=>`<div class="anx-foto"><a href="/_blob/${esc(a.id)}" target="_blank" rel="noopener" title="${esc(a.nome||"Foto")}"><img src="/_blob/${esc(a.id)}" alt="Foto da devolução" loading="lazy"></a>${rmOk(a)?`<button class="rm" type="button" data-rm="${esc(a.k)}" aria-label="Remover foto">×</button>`:""}</div>`).join("");
+  if(!l.length && !assets) box.innerHTML='<div class="vazio">Seu acesso não permite guardar anexos neste painel. A leitura da NF continua funcionando para preencher os campos.</div>';
+  resolverNomes($("#anexos"));
+  renderEscolhaAnexos();
+}
+function statusAnx(txt, tipo, alvo){
+  const s=$(alvo==="processos"?"#fat-status":"#anx-status"); if(!s) return; if(!txt){ s.hidden=true; return; }
+  s.hidden=false; s.className="anx-status"+(tipo?" "+tipo:""); s.innerHTML=tipo==="lendo"?'<span class="giro"></span><span></span>':"<span></span>"; s.lastChild.textContent=txt;
+}
+const MSG_UPLOAD={too_large:"Arquivo maior que 20 MB.",unsupported_type:"Tipo de arquivo não aceito. Use XML, PDF, JPG ou PNG (fotos HEIC do iPhone: exporte como JPG).",quota_or_state:"O espaço de anexos do painel está cheio.",rate_limited:"Muitos envios seguidos. Aguarde um pouco."};
+async function subirArquivo(file, tipo){
+  if(!assets) return null;
+  const opts={}; const nome=file.name||"arquivo";
+  if(/\.xml$/i.test(nome) || /xml/.test(file.type)) opts.type="text/plain";
+  else if(!file.type && /\.pdf$/i.test(nome)) opts.type="application/pdf";
+  try{ const r=await assets.upload(file, opts.type?opts:undefined); return {id:r.id, nome, tipo, contentType:r.contentType, em:agoraISO(), por:meId}; }
+  catch(e){ toast("Não foi possível guardar "+nome+": "+(MSG_UPLOAD[e&&e.code]||"tente de novo."),true); return null; }
+}
+async function registrarAnexo(a){
+  const k=chave();
+  if(aberto==="__novo__"){ anexosPendentes[k]=a; renderAnexos(); return; }
+  try{ await gravar({anexos:{[k]:a}}, `Anexo adicionado (${rotuloAnexo(a.tipo)}): ${a.nome}`, TIPOS_PROC.has(a.tipo)?"processos":"logistica", "anexo"); }catch(e){ tratarErro(e); }
+}
+async function removerAnexo(k){
+  const l=listaAnexos().find(a=>a.k===k); if(!l) return;
+  if(aberto==="__novo__"){ delete anexosPendentes[k]; renderAnexos(); }
+  else { try{ await gravar({anexos:{[k]:null}}, `Anexo removido: ${l.nome}`, setor||"logistica", "anexo"); }catch(e){ tratarErro(e); return; } }
+  if(assets){ try{ await assets.delete(l.id); }catch(e){} }
+}
+async function onFotos(files){
+  if(!assets){ toast("Seu acesso não permite anexar fotos. Peça acesso de Colaborador.",true); return; }
+  statusAnx(`Enviando ${files.length} foto${files.length>1?"s":""}…`,"lendo");
+  let ok=0; for(const f of files){ const a=await subirArquivo(f,"foto"); if(a){ await registrarAnexo(a); ok++; } }
+  statusAnx(ok?`${ok} foto${ok>1?"s anexadas":" anexada"}.`:"", ok?"ok":"");
+}
+
+async function onFaturamento(files){
+  if(!etapaLiberada("processos")) return;
+  if(!assets){ toast("Seu acesso não permite anexar arquivos. Peça acesso de Colaborador.",true); return; }
+  statusAnx("Enviando boleto…","lendo","processos");
+  let ok=0; for(const f of files){ const a=await subirArquivo(f,"boleto"); if(a){ await registrarAnexo(a); ok++; } }
+  statusAnx(ok?`${ok} boleto${ok>1?"s anexados":" anexado"}.`:"", ok?"ok":"", "processos");
+}
+
+/* Leitura da NF */
+const JSON_NF = `{"nf":"número da NF só com dígitos","serie":"","chave":"chave de acesso com 44 dígitos, sem espaços","dataEmissao":"AAAA-MM-DD","cliente":"razão social do destinatário","cnpjCpf":"CNPJ ou CPF do destinatário","endereco":"logradouro, número, bairro","cidadeUf":"Cidade/UF","cep":"","valorTotal":1234.56,"vendedor":"nome do vendedor, se constar nos dados adicionais","motorista":"nome do motorista, se constar (dados adicionais), sem código nem CPF","placa":"placa do veículo (transportador ou dados adicionais)","pedido":"número do pedido, se constar","duplicatas":[{"numero":"001","vencimento":"AAAA-MM-DD","valor":100.0}],"itens":[{"descricao":"","quantidade":1,"unidade":"CX","valor":10.5}]}`;
+const JSON_BOLETO = `{"linhaDigitavel":"linha digitável como impressa","nossoNumero":"","vencimento":"AAAA-MM-DD","valor":123.45,"pagador":"nome do pagador","beneficiario":"nome do beneficiário"}`;
+const PROMPT_NF = `Você está lendo uma nota fiscal eletrônica brasileira (DANFE / NF-e) para um controle de devoluções e refaturamento.
+Extraia os dados do DESTINATÁRIO (o cliente que comprou), nunca do emitente.
+Responda somente com um objeto JSON neste formato, usando null para o que não encontrar:
+${JSON_NF}`;
+const PROMPT_BOLETO = `Você está lendo um boleto bancário brasileiro. Responda somente com um objeto JSON neste formato, usando null para o que não encontrar:
+${JSON_BOLETO}`;
+const PROMPT_QUAL = `O documento é uma nota fiscal brasileira (DANFE / NF-e) OU um boleto bancário. Responda somente com um objeto JSON: {"tipo":"nf" ou "boleto","nf":objeto no formato A ou null,"boleto":objeto no formato B ou null}. Use null para o que não encontrar.
+Formato A (nota fiscal; dados do DESTINATÁRIO, nunca do emitente): ${JSON_NF}
+Formato B (boleto): ${JSON_BOLETO}`;
+function lerXmlNFe(txt){
+  const doc=new DOMParser().parseFromString(txt,"application/xml");
+  if(doc.getElementsByTagName("parsererror").length) throw {code:"xml_invalido"};
+  const q=(root,tag)=>{ if(!root) return ""; const e=root.getElementsByTagName(tag)[0]; return e?e.textContent.trim():""; };
+  const inf=doc.getElementsByTagName("infNFe")[0]; if(!inf) throw {code:"xml_invalido"};
+  const ide=inf.getElementsByTagName("ide")[0], dest=inf.getElementsByTagName("dest")[0], ender=dest&&dest.getElementsByTagName("enderDest")[0];
+  const tot=inf.getElementsByTagName("ICMSTot")[0];
+  const infCpl=q(inf,"infCpl");
+  const vend=(infCpl.match(/vend(?:edor|\.)?\s*[:\-]?\s*([A-Za-zÀ-ÿ0-9 .]{2,40})/i)||[])[1];
+  return {
+    nf:q(ide,"nNF"), serie:q(ide,"serie"),
+    chave:((inf.getAttribute("Id")||"").replace(/^NFe/,"")) || q(doc.documentElement,"chNFe"),
+    dataEmissao:(q(ide,"dhEmi")||q(ide,"dEmi")).slice(0,10),
+    cliente:q(dest,"xNome"), cnpjCpf:q(dest,"CNPJ")||q(dest,"CPF"),
+    endereco:[q(ender,"xLgr"),q(ender,"nro"),q(ender,"xCpl"),q(ender,"xBairro")].filter(Boolean).join(", "),
+    cidadeUf:[q(ender,"xMun"),q(ender,"UF")].filter(Boolean).join("/"), cep:q(ender,"CEP"),
+    valorTotal:parseFloat(q(tot,"vNF"))||null, vendedor:vend?vend.trim():null,
+    motorista:((infCpl.match(/motorista\s*:?\s*(?:\d+\s*-\s*)?([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ .']{2,60}?)(?=\s+\d{3}\.|\s+ve[ií]culo|\s*[;|]|$)/i)||[])[1]||"").trim()||null,
+    placa:q(inf.getElementsByTagName("veicTransp")[0],"placa") || ((infCpl.match(/ve[ií]culo\s*:?\s*([A-Z]{3}-?\d[A-Z0-9]\d{2})/i)||[])[1]||null),
+    pedido:q(inf,"xPed") || ((infCpl.match(/pedido\s*(?:n[º°o.]*)?\s*[:\-]?\s*([A-Za-z0-9\-\/]{2,20})/i)||[])[1]||null),
+    duplicatas:[...inf.getElementsByTagName("dup")].map(d=>({numero:q(d,"nDup"), vencimento:q(d,"dVenc"), valor:parseFloat(q(d,"vDup"))||null})),
+    itens:[...inf.getElementsByTagName("det")].map(d=>{ const p=d.getElementsByTagName("prod")[0]; return {descricao:q(p,"xProd"), quantidade:parseFloat(q(p,"qCom")), unidade:q(p,"uCom"), valor:parseFloat(q(p,"vProd"))}; })
+  };
+}
+let pdfjsPronto=null;
+function carregarScript(src){ return new Promise((ok,falha)=>{ const s=document.createElement("script"); s.src=src; s.onload=ok; s.onerror=()=>falha({code:"pdf_lib"}); document.head.appendChild(s); }); }
+function carregarPdfJs(){
+  if(!pdfjsPronto) pdfjsPronto=(async()=>{ const base="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/"; await carregarScript(base+"pdf.min.js"); await carregarScript(base+"pdf.worker.min.js"); window.pdfjsLib.GlobalWorkerOptions.workerSrc=base+"pdf.worker.min.js"; })();
+  return pdfjsPronto;
+}
+async function lerPdfNF(file){
+  await carregarPdfJs();
+  const pdf=await window.pdfjsLib.getDocument({data:await file.arrayBuffer(), isEvalSupported:false}).promise;
+  let txt="";
+  for(let i=1;i<=Math.min(pdf.numPages,3);i++){ const pg=await pdf.getPage(i); const tc=await pg.getTextContent(); txt+=tc.items.map(it=>it.str+(it.hasEOL?"\n":" ")).join("")+"\n"; }
+  if(txt.replace(/\s/g,"").length>200) return await sample.json(PROMPT_NF+"\n\nTexto extraído do PDF da nota:\n\n"+txt.slice(0,40000));
+  if(!sampleImgs) throw {code:"images_unavailable"};
+  const pg=await pdf.getPage(1); const vp=pg.getViewport({scale:2}); const cv=document.createElement("canvas"); cv.width=vp.width; cv.height=vp.height;
+  await pg.render({canvasContext:cv.getContext("2d"), viewport:vp}).promise;
+  const blob=await new Promise(r=>cv.toBlob(r,"image/png"));
+  return await sample.json(PROMPT_NF+"\n\nA imagem anexa é a primeira página da nota.", {images:[blob]});
+}
+async function lerImagemNF(file){
+  if(!sampleImgs) throw {code:"images_unavailable"};
+  return await sample.json(PROMPT_NF+"\n\nA imagem anexa é uma foto da nota (DANFE).", {images:[file]});
+}
+const MSG_LEITURA={not_granted:"A leitura automática não foi autorizada. Preencha os campos manualmente.",sampling_disabled:"A leitura automática não está disponível para sua conta.",rate_limited:"Muitas leituras seguidas. Tente de novo em alguns minutos.",image_rejected:"Não consegui abrir a imagem. Use JPG ou PNG.",images_unavailable:"A leitura de foto não está disponível aqui. Anexe o XML ou o PDF da NF.",xml_invalido:"O arquivo XML não parece ser uma NF-e válida.",pdf_lib:"Não foi possível abrir o leitor de PDF. Tente de novo.",sem_leitor:"Leitura automática indisponível. Anexe o XML da NF-e ou preencha manualmente."};
+async function onNF(file, alvo){
+  alvo=alvo||"logistica";
+  if(lendoNF) return;
+  if(alvo==="processos"){ if(!etapaLiberada("processos")) return; }
+  else if(setor!=="logistica"){ toast("Só a Logística anexa a nota fiscal da devolução.",true); return; }
+  lendoNF=true;
+  const nome=file.name||"nota";
+  const ehXml=/\.xml$/i.test(nome)||/xml/.test(file.type), ehPdf=/\.pdf$/i.test(nome)||file.type==="application/pdf", ehImg=/^image\//.test(file.type);
+  statusAnx(ehXml?"Lendo o XML da NF-e…":"O Claude está lendo a nota. Isso leva alguns segundos…","lendo",alvo);
+  const envio=subirArquivo(file, alvo==="processos"?"nfnova":"nf");
+  let dados=null, erro=null;
+  try{
+    if(ehXml) dados=lerXmlNFe(await file.text());
+    else if(!sample) throw {code:"sem_leitor"};
+    else if(ehPdf) dados=await lerPdfNF(file);
+    else if(ehImg) dados=await lerImagemNF(file);
+    else throw {code:"image_rejected"};
+  }catch(e){ erro=MSG_LEITURA[e&&e.code]||"Não consegui ler os dados desta nota. Confira o arquivo ou preencha manualmente."; }
+  const a=await envio; if(a && $("#anexos")) await registrarAnexo(a);
+  lendoNF=false;
+  if(!$("#sec-"+alvo)) return; // ficha fechada no meio da leitura
+  if(dados && typeof dados==="object"){
+    if(alvo==="processos"){ const r=aplicarNFProcessos(dados); statusAnx(r.n?`${r.n} campos preenchidos a partir da nova NF (em verde). Confira e clique em Salvar rascunho ou Concluir.${r.aviso?" ATENÇÃO: "+r.aviso:""}`:"Não encontrei dados na nota. Preencha manualmente.", r.n&&!r.aviso?"ok":"erro", alvo); }
+    else { const n=aplicarDadosNF(dados); statusAnx(n?`${n} campos preenchidos a partir da NF (em verde). Confira e clique em ${aberto==="__novo__"?"Registrar":"Salvar"}.`:"Não encontrei dados na nota. Preencha manualmente.", n?"ok":"erro"); }
+  }
+  else statusAnx(erro+(a?" O arquivo ficou anexado.":""),"erro",alvo);
+}
+function aplicarDadosNF(d){
+  const s=v=>v==null?"":String(v).trim();
+  const num=v=>typeof v==="number"&&isFinite(v)?v:lerMoeda(v);
+  const sec=$("#sec-logistica"); if(sec && !sec.open) sec.open=true;
+  let n=0;
+  const por=(k,v,soVazio)=>{ const el=document.getElementById("f-logistica-"+k); if(!el||v==null||v==="") return; if(soVazio && el.value.trim()) return;
+    const f=CAMPOS.logistica.find(x=>x.k===k);
+    if(f.t==="money") el.value=fmtNum(v); else el.value=v;
+    const c=el.closest(".c"); if(c){ c.classList.add("lido"); c.classList.remove("erro"); } n++; };
+  por("nf", s(d.nf).replace(/\D/g,"").replace(/^0+(?=\d)/,""));
+  por("serie", s(d.serie));
+  por("chave", s(d.chave).replace(/\D/g,""));
+  por("dataEmissao", /^\d{4}-\d{2}-\d{2}$/.test(s(d.dataEmissao))?s(d.dataEmissao):"");
+  por("cliente", s(d.cliente));
+  por("cnpjCliente", s(d.cnpjCpf));
+  por("enderecoCliente", [s(d.endereco), d.cep?("CEP "+s(d.cep)):""].filter(Boolean).join(" – "));
+  por("cidadeUf", s(d.cidadeUf));
+  const vt=num(d.valorTotal); if(vt!=null) por("valorNf", vt);
+  if(d.vendedor) por("vendedor", s(d.vendedor), true);
+  if(d.motorista) por("motorista", s(d.motorista), true);
+  if(d.placa) por("placa", s(d.placa).toUpperCase().replace(/[^A-Z0-9]/g,""), true);
+  const tipo=document.getElementById("f-logistica-tipo");
+  if(vt!=null && (!tipo || tipo.value!=="Parcial")) por("valor", vt, true);
+  if(Array.isArray(d.itens) && d.itens.length){
+    const linhas=d.itens.slice(0,60).map(it=>{ const q=num(it&&it.quantidade); return `${q!=null?q.toLocaleString("pt-BR"):""} ${s(it&&it.unidade)} – ${s(it&&it.descricao)}${num(it&&it.valor)!=null?" ("+fmtMoeda(num(it.valor))+")":""}`.trim(); });
+    por("itens", linhas.join("\n"), true);
+  }
+  if(n){ sujo.logistica=true; atualizarEmail(); }
+  return n;
+}
+
+function classificarTexto(t){
+  if(/DANFE|DOCUMENTO AUXILIAR DA NOTA|CHAVE DE ACESSO/i.test(t)) return "nf";
+  if(/linha digit|nosso n.mero|benefici.rio|cedente|ficha de compensa|autentica..o mec/i.test(t)) return "boleto";
+  return null;
+}
+async function lerDocProcessos(file){
+  const nome=file.name||"";
+  if(/\.xml$/i.test(nome)||/xml/.test(file.type)) return {tipo:"nf", dados:lerXmlNFe(await file.text())};
+  if(!sample) throw {code:"sem_leitor"};
+  const qual=async(prompt,opts)=>{ const r=await sample.json(prompt,opts); if(r&&r.tipo==="boleto") return {tipo:"boleto",dados:r.boleto}; return {tipo:r&&r.tipo==="nf"?"nf":null, dados:r&&r.nf}; };
+  if(/\.pdf$/i.test(nome)||file.type==="application/pdf"){
+    await carregarPdfJs();
+    const pdf=await window.pdfjsLib.getDocument({data:await file.arrayBuffer(), isEvalSupported:false}).promise;
+    let txt=""; for(let i=1;i<=Math.min(pdf.numPages,3);i++){ const pg=await pdf.getPage(i); const tc=await pg.getTextContent(); txt+=tc.items.map(it=>it.str+(it.hasEOL?"\n":" ")).join("")+"\n"; }
+    if(txt.replace(/\s/g,"").length>120){
+      const t=classificarTexto(txt), corpo="\n\nTexto extraído do PDF:\n\n"+txt.slice(0,40000);
+      if(t==="nf") return {tipo:"nf", dados:await sample.json(PROMPT_NF+corpo)};
+      if(t==="boleto") return {tipo:"boleto", dados:await sample.json(PROMPT_BOLETO+corpo)};
+      return await qual(PROMPT_QUAL+corpo);
+    }
+    if(!sampleImgs) throw {code:"images_unavailable"};
+    const pg=await pdf.getPage(1); const vp=pg.getViewport({scale:2}); const cv=document.createElement("canvas"); cv.width=vp.width; cv.height=vp.height;
+    await pg.render({canvasContext:cv.getContext("2d"), viewport:vp}).promise;
+    return await qual(PROMPT_QUAL+"\n\nA imagem anexa é a primeira página do documento.", {images:[await new Promise(r=>cv.toBlob(r,"image/png"))]});
+  }
+  if(/^image\//.test(file.type)){ if(!sampleImgs) throw {code:"images_unavailable"}; return await qual(PROMPT_QUAL+"\n\nA imagem anexa é uma foto do documento.", {images:[file]}); }
+  throw {code:"image_rejected"};
+}
+async function onDocsProcessos(files){
+  if(lendoNF || !etapaLiberada("processos")) return;
+  lendoNF=true; const msgs=[], avisos=[]; let total=0;
+  for(const f of files.slice(0,6)){
+    statusAnx(`Lendo ${f.name}…`,"lendo","processos");
+    let tipo=null, dados=null, erro=null;
+    try{ ({tipo,dados}=await lerDocProcessos(f)); }catch(e){ erro=MSG_LEITURA[e&&e.code]||"não consegui ler os dados"; }
+    const a=await subirArquivo(f, tipo==="boleto"?"boleto":tipo==="nf"?"nfnova":"faturamento");
+    if(a && $("#anexos")) await registrarAnexo(a);
+    if(!$("#sec-processos")) break;
+    if(dados && typeof dados==="object"){ const r= tipo==="boleto" ? aplicarBoleto(dados) : aplicarNFProcessos(dados); total+=r.n; msgs.push(`${f.name}: ${tipo==="boleto"?"boleto":"nota fiscal"} (${r.n} campos)`); if(r.aviso) avisos.push(r.aviso); }
+    else msgs.push(`${f.name}: ${erro||"não encontrei dados"}${a?" (ficou anexado)":""}`);
+  }
+  lendoNF=false;
+  statusAnx(msgs.join(" · ")+(total?". Campos em verde: confira e salve.":"")+(avisos.length?" ATENÇÃO: "+avisos.join(" "):""), total&&!avisos.length?"ok":"erro","processos");
+}
+function preencherLido(sec,k,v,soVazio){
+  const el=document.getElementById(`f-${sec}-${k}`); if(!el||v==null||v==="") return false; if(soVazio && el.value.trim()) return false;
+  const f=CAMPOS[sec].find(x=>x.k===k);
+  if(f.t==="money") el.value=fmtNum(v); else if(f.t==="select"){ if(![...el.options].some(o=>o.value===v)) return false; el.value=v; } else el.value=v;
+  const c=el.closest(".c"); if(c){ c.classList.add("lido"); c.classList.remove("erro"); } return true;
+}
+function aplicarBoleto(d){
+  const s=v=>v==null?"":String(v).trim(); const num=v=>typeof v==="number"&&isFinite(v)?v:lerMoeda(v);
+  const sec=$("#sec-processos"); if(sec && !sec.open) sec.open=true;
+  let n=0; const por=(k,v,sv)=>{ if(preencherLido("processos",k,v,sv)) n++; };
+  por("cobranca", BOLETO);
+  por("boletoNumero", s(d.linhaDigitavel)||s(d.nossoNumero));
+  if(/^\d{4}-\d{2}-\d{2}$/.test(s(d.vencimento))) por("boletoVencimento", s(d.vencimento));
+  let aviso="";
+  const vb=num(d.valor), vf=lerMoeda((document.getElementById("f-processos-valorFaturado")||{}).value);
+  if(vb!=null && vf!=null && Math.abs(vb-vf)>0.01) aviso=`o valor do boleto (${fmtMoeda(vb)}) é diferente do valor faturado (${fmtMoeda(vf)}).`;
+  const cli=(document.getElementById("f-processos-clienteNovaNf")||{}).value;
+  const np=normNome(d.pagador), nc=normNome(cli);
+  if(!aviso && np && nc && !(np.includes(nc)||nc.includes(np)||np.split(" ").slice(0,2).join(" ")===nc.split(" ").slice(0,2).join(" "))) aviso=`o boleto está em nome de "${s(d.pagador)}", mas a nova NF é de "${s(cli)}".`;
+  if(n){ sujo.processos=true; atualizarResumo(); }
+  return {n, aviso};
+}
+function normNome(v){ return String(v||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/\b(ltda|me|epp|eireli|s\/?a|cia|comercio|com)\b/g," ").replace(/[^a-z0-9 ]/g," ").replace(/\s+/g," ").trim(); }
+function aplicarNFProcessos(d){
+  const s=v=>v==null?"":String(v).trim();
+  const num=v=>typeof v==="number"&&isFinite(v)?v:lerMoeda(v);
+  const sec=$("#sec-processos"); if(sec && !sec.open) sec.open=true;
+  let n=0;
+  const por=(k,v,soVazio)=>{ const el=document.getElementById("f-processos-"+k); if(!el||v==null||v==="") return; if(soVazio && el.value.trim()) return;
+    const f=CAMPOS.processos.find(x=>x.k===k);
+    if(f.t==="money") el.value=fmtNum(v); else if(f.t==="select"){ if(![...el.options].some(o=>o.value===v)) return; el.value=v; } else el.value=v;
+    const c=el.closest(".c"); if(c){ c.classList.add("lido"); c.classList.remove("erro"); } n++; };
+  por("novaNf", s(d.nf).replace(/\D/g,"").replace(/^0+(?=\d)/,""));
+  por("chaveNovaNf", s(d.chave).replace(/\D/g,""));
+  por("dataFaturamento", /^\d{4}-\d{2}-\d{2}$/.test(s(d.dataEmissao))?s(d.dataEmissao):"");
+  const vt=num(d.valorTotal); if(vt!=null) por("valorFaturado", vt);
+  por("clienteNovaNf", s(d.cliente));
+  por("cnpjNovaNf", s(d.cnpjCpf));
+  if(d.pedido) por("numeroPedido", s(d.pedido), true);
+  const dups=Array.isArray(d.duplicatas)?d.duplicatas.filter(x=>x&&(x.vencimento||x.valor)):[];
+  if(dups.length){
+    por("cobranca", BOLETO, true);
+    const venc=dups.map(x=>s(x.vencimento)).filter(v=>/^\d{4}-\d{2}-\d{2}$/.test(v)).sort()[0];
+    if(venc) por("boletoVencimento", venc, true);
+  }
+  // confere se a nova NF saiu para o cliente certo
+  const c=casos.get(aberto)||{}; const C=c.comercial||{}, L=c.logistica||{};
+  const esperado = C.decisao===REVENDA ? C.novoCliente : C.decisao && C.decisao!==ESTOQUE ? L.cliente : "";
+  let aviso="";
+  const nn=normNome(d.cliente), ne=normNome(esperado);
+  if(nn && ne && !(nn.includes(ne)||ne.includes(nn)||nn.split(" ").slice(0,2).join(" ")===ne.split(" ").slice(0,2).join(" ")))
+    aviso=`a nova NF está em nome de "${s(d.cliente)}", mas o Comercial informou "${s(esperado)}".`;
+  const vr=num(C.preco); if(!aviso && vr!=null && vt!=null && Math.abs(vr-vt)>0.01) aviso=`o valor da nova NF (${fmtMoeda(vt)}) é diferente do valor de revenda informado pelo Comercial (${fmtMoeda(vr)}).`;
+  if(n){ sujo.processos=true; atualizarResumo(); }
+  return {n, aviso};
+}
+
+/* ---------- Resumo final e envio pelo Outlook ---------- */
+function fmtDataHora(iso){ const d=new Date(iso); if(isNaN(d)) return ""; return d.toLocaleDateString("pt-BR")+" "+d.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}); }
+function nomeDe(id){ return id ? (cacheNomes[id]||"Alguém") : "Exemplo"; }
+async function carregarNomes(c){
+  if(!user||!c) return; const ids=new Set([c.criadoPor,c.atualizadoPor,meId].filter(Boolean));
+  for(const m of [...Object.values(c.historico||{}),...Object.values(c.comentarios||{})]) if(m&&m.por) ids.add(m.por);
+  if(!ids.size) return; try{ const ps=await user.profiles([...ids]); for(const id in ps) if(ps[id]&&ps[id].name) cacheNomes[id]=ps[id].name; }catch(e){}
+}
+function valorCampo(f,v){
+  if(v==null||v==="") return ""; if(f.t==="check") return v?"Sim":"";
+  if(f.t==="money") return fmtMoeda(typeof v==="number"?v:lerMoeda(v)); if(f.t==="date") return fmtData(v);
+  if(f.t==="datetime"){ const m=String(v).match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}:\d{2})/); return m?`${m[3]}/${m[2]}/${m[1]} ${m[4]}`:String(v); }
+  return String(v);
+}
+const FORA_RESUMO=new Set(["resumoEnviar","resumoPara","resumoCc"]);
+function dadosResumo(c, proc){
+  const caso=Object.assign({},c,{processos:Object.assign({},c.processos||{},proc||{})});
+  const secoes=SECOES.map(s=>({titulo:ET[s].nome, linhas:CAMPOS[s].filter(f=>f.k&&!FORA_RESUMO.has(f.k)).map(f=>[f.l.replace(/\s*\([^)]*\)\s*$/,""), valorCampo(f,(caso[s]||{})[f.k])]).filter(l=>l[1]!=="")}));
+  const porEm=(a,b)=>String(a.em).localeCompare(String(b.em));
+  const anexos=Object.values(c.anexos||{}).filter(a=>a&&a.id).sort(porEm).map(a=>`${rotuloAnexo(a.tipo)}: ${a.nome||""}`);
+  const hist=Object.values(c.historico||{}).filter(h=>h&&h.em).sort(porEm).map(h=>`${fmtDataHora(h.em)} · ${ET[h.setor]?ET[h.setor].nome+" · ":""}${nomeDe(h.por)}: ${h.acao}`);
+  const coms=Object.values(c.comentarios||{}).filter(m=>m&&m.em).sort(porEm).map(m=>`${fmtDataHora(m.em)} · ${nomeDe(m.por)}${ET[m.setor]?" ("+ET[m.setor].nome+")":""}: ${m.texto}`);
+  const encerrado = c.etapa==="concluido" ? `Encerrado em ${fmtDataHora(c.etapaDesde)}` : `Encerrado em ${fmtDataHora(agoraISO())} por ${nomeDe(meId)}`;
+  return {secoes, anexos, hist, coms, encerrado, and:andamentoLinhas(c)};
+}
+function assuntoResumo(c){ const L=c.logistica||{}; return `Resumo final – Devolução ${c.codigo||""} – NF ${L.nf||"s/n"} – ${L.cliente||""}`.slice(0,250); }
+function textoResumo(c,r){
+  const L=c.logistica||{}; const o=[assuntoResumo(c),"",`${r.encerrado}.`,`Cliente: ${L.cliente||"—"} · NF ${L.nf||"—"} · Valor devolvido: ${fmtMoeda(L.valor)||"—"}`];
+  if(r.and&&r.and.length){ o.push("","ANDAMENTO"); r.and.forEach(x=>o.push("- "+x)); }
+  for(const sct of r.secoes){ o.push("",sct.titulo.toUpperCase()); for(const [k,v] of sct.linhas) o.push(`${k}: ${v}`); }
+  if(r.anexos.length){ o.push("","ANEXOS (disponíveis no painel)"); r.anexos.forEach(a=>o.push("- "+a)); }
+  o.push("","HISTÓRICO"); r.hist.forEach(h=>o.push("- "+h));
+  if(r.coms.length){ o.push("","CONVERSA DO CASO"); r.coms.forEach(m=>o.push("- "+m)); }
+  o.push("",`Painel: ${PAINEL_URL}`);
+  return o.join("\n");
+}
+function htmlResumo(c,r){
+  const L=c.logistica||{}; const br=v=>esc(v).replace(/\n/g,"<br>");
+  let h=`<h2>Devolução ${esc(c.codigo||"")} – processo encerrado</h2><p>${esc(r.encerrado)}.<br>Cliente: <b>${esc(L.cliente||"—")}</b> · NF ${esc(L.nf||"—")} · Valor devolvido: ${esc(fmtMoeda(L.valor)||"—")}</p>`;
+  if(r.and&&r.and.length) h+=`<h3>Andamento</h3><ul>${r.and.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`;
+  for(const sct of r.secoes){ h+=`<h3>${esc(sct.titulo)}</h3>`; h+= sct.linhas.length ? `<table>${sct.linhas.map(([k,v])=>`<tr><td><b>${esc(k)}</b></td><td>${br(v)}</td></tr>`).join("")}</table>` : "<p>Sem dados.</p>"; }
+  if(r.anexos.length) h+=`<h3>Anexos</h3><ul>${r.anexos.map(a=>`<li>${esc(a)}</li>`).join("")}</ul><p>Os arquivos ficam disponíveis no painel.</p>`;
+  h+=`<h3>Histórico</h3><ul>${r.hist.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`;
+  if(r.coms.length) h+=`<h3>Conversa do caso</h3><ul>${r.coms.map(x=>`<li>${br(x)}</li>`).join("")}</ul>`;
+  h+=`<p>Painel de Devoluções e Refaturas: <a href="${PAINEL_URL}">${PAINEL_URL}</a></p>`;
+  return h;
+}
+function atualizarResumo(){ const t=$("#resumo-txt"); const c=casos.get(aberto); if(!t||!c) return; t.value=textoResumo(c, dadosResumo(c, lerSecao("processos"))); }
+function defaultsProcessos(c){
+  if(sujo.processos) return; const P=c.processos||{};
+  const ck=document.getElementById("f-processos-resumoEnviar"); if(ck && !("resumoEnviar" in P)) ck.checked=true;
+  const pa=document.getElementById("f-processos-resumoPara"); if(pa && !pa.value){ const dst=(c.ocorrencia||{}).destinatarios; if(dst) pa.value=dst; }
+}
+async function copiarResumo(){ const t=$("#resumo-txt"); try{ await navigator.clipboard.writeText(t.value); toast("Resumo copiado."); }catch(e){ t.focus(); t.select(); toast("Texto selecionado. Use Ctrl+C para copiar."); } }
+const reEmail=/^[^@\s,;]+@[^@\s,;]+\.[^@\s,;]+$/;
+const lerEmails=v=>[...new Set(String(v||"").split(/[,;\s]+/).map(x=>x.trim()).filter(Boolean))];
+const MSG_MCP={server_not_connected:"Conecte o Microsoft 365 (Outlook) em claude.ai → Configurações → Conectores e tente de novo.",needs_reauth:"Sua conexão com o Microsoft 365 expirou. Reconecte em claude.ai → Configurações → Conectores.",selection_required:"Escolha qual conexão do Microsoft 365 usar no aviso do claude.ai e tente de novo.",not_in_manifest:"O uso do Outlook não foi permitido para este painel. Recarregue a página e permita quando o claude.ai perguntar.",approval_required:"O envio precisa da sua aprovação. Clique de novo e permita no aviso do claude.ai.",blocked_by_policy:"A política da empresa bloqueia o envio de e-mail por aqui. Use Copiar e envie pelo Outlook.",not_granted:"O envio pelo Outlook não está disponível aqui. Use Copiar.",capability_disabled:"O envio pelo Outlook não está disponível aqui. Use Copiar."};
+function msgMcp(e){ const c=e&&e.code; if(c==="tool_error") return "O Outlook recusou o envio: "+String(e.message||"").slice(0,200); return MSG_MCP[c]||"Não foi possível confirmar o envio. Confira sua pasta Itens Enviados antes de tentar de novo."; }
+function validarDestinos(to,cc,campo){
+  if(!to.length){ toast("Informe pelo menos um e-mail de destino.",true); return false; }
+  const inval=[...to,...cc].filter(x=>!reEmail.test(x)); if(inval.length){ toast("E-mail inválido: "+inval.join(", "),true); return false; }
+  if(to.length+cc.length>50){ toast("Máximo de 50 destinatários.",true); return false; } return true;
+}
+async function enviarResumo(rascunho){
+  const c=casos.get(aberto); if(!c||enviando) return false;
+  if(setor!=="processos" || IDX[c.etapa]<IDX.processos){ toast("Só o setor Processos envia o resumo final, a partir da etapa dele.",true); return false; }
+  if(!mcp){ toast(MSG_MCP.not_granted,true); return false; }
+  const d=Object.assign({},c.processos||{},lerSecao("processos")); const to=lerEmails(d.resumoPara), cc=lerEmails(d.resumoCc);
+  if(!validarDestinos(to,cc)){ marcarErros("processos",CAMPOS.processos.filter(f=>f.k==="resumoPara")); return false; }
+  enviando=true; const bts=["#enviar-resumo","#rasc-resumo"].map(q=>$(q)); bts.forEach(b=>b&&(b.disabled=true));
+  const info=$("#resumo-info");
+  try{
+    await carregarNomes(c); const r=dadosResumo(c,d);
+    const input={to, subject:assuntoResumo(c), body:htmlResumo(c,r), bodyType:"html"}; if(cc.length) input.cc=cc;
+    if(rascunho){
+      const lista=anexosEscolhidos("res");
+      if(info) info.textContent=lista.length?"Baixando os anexos…":"Criando o e-mail no Outlook…";
+      const baixou=await baixarAnexos(lista, `${c.codigo||"devolucao"}_resumo`);
+      if(lista.length) input.body+=`<p><b>Anexos deste e-mail:</b> ${lista.map(a=>esc(a.nome||rotuloAnexo(a.tipo))).join(", ")}</p>`;
+      if(info) info.textContent="Criando o e-mail no Outlook…";
+      const res=await mcp.callTool(M365, "outlook_create_draft", input);
+      const link=res&&res.payload&&(res.payload.webLink||res.payload.weblink);
+      const passo={link, anexos:lista.length, baixou}; ultimoRascunho[aberto]=Object.assign(ultimoRascunho[aberto]||{}, {res:passo});
+      mostrarPasso(info, passo);
+      toast(lista.length?"E-mail pronto nos seus Rascunhos do Outlook. Anexe o arquivo baixado e envie.":"E-mail pronto nos seus Rascunhos do Outlook.");
+      try{ await gravar({processos:{resumoPreparadoEm:agoraISO(), resumoPreparadoPara:to.join(", ")}}, `E-mail de resumo final preparado no Outlook para ${to.join(", ")}${lista.length?" com "+lista.length+" anexo(s)":""}`, "processos", "email"); }catch(e){ tratarErro(e); }
+      return true;
+    }
+    if(info) info.textContent="Enviando pelo Outlook…";
+    await mcp.callTool(M365, "outlook_send_mail", input);
+    toast("Resumo final enviado pelo Outlook.");
+    try{ await gravar({processos:{resumoEnviadoEm:agoraISO(), resumoEnviadoPara:to.join(", ")}}, `Resumo final enviado por e-mail para ${to.join(", ")}${cc.length?" (cópia: "+cc.join(", ")+")":""}`, "processos", "email"); }catch(e){ tratarErro(e); }
+    return true;
+  }catch(e){ toast(msgMcp(e),true); if(info) info.textContent=""; return false; }
+  finally{ enviando=false; const c2=casos.get(aberto); const ok=c2&&(c2.etapa==="processos"||c2.etapa==="concluido")&&setor==="processos"; bts.forEach(b=>b&&(b.disabled=!ok)); }
+}
+function anexosEscolhidos(box){ return listaAnexos().filter(a=>(a.k in selAnx[box]) ? selAnx[box][a.k] : PADRAO_ANX[box].includes(a.tipo)); }
+function renderEscolhaAnexos(){
+  for(const box of ["oco","res"]){
+    const el=$("#anx-"+box); if(!el) continue; const l=listaAnexos();
+    if(!l.length){ el.innerHTML='<span class="sub">Nenhum arquivo anexado ao caso ainda.</span>'; continue; }
+    el.innerHTML='<span class="sub">Arquivos para anexar:</span>'+l.map(a=>{ const on=(a.k in selAnx[box])?selAnx[box][a.k]:PADRAO_ANX[box].includes(a.tipo); return `<label class="chk-mini"><input type="checkbox" data-box="${box}" data-k="${esc(a.k)}"${on?" checked":""}> ${esc(rotuloAnexo(a.tipo))}: ${esc(a.nome||"")}</label>`; }).join("");
+  }
+}
+function mostrarPasso(el, passo){
+  if(!el) return; if(!passo){ el.innerHTML=""; el.className=el.id==="resumo-info"?"sub":""; return; }
+  el.className="passo"; el.textContent = passo.anexos ? (passo.baixou ? `E-mail pronto nos seus Rascunhos do Outlook e ${passo.anexos>1?"anexos baixados (arquivo .zip)":"anexo baixado"} no seu computador. Abra o rascunho, arraste o arquivo baixado para o e-mail e clique em Enviar. ` : "E-mail pronto nos seus Rascunhos do Outlook, mas o download dos anexos não foi concluído: abra os arquivos no topo do caso, salve e anexe. ") : "E-mail pronto nos seus Rascunhos do Outlook. Abra e clique em Enviar. ";
+  if(typeof passo.link==="string" && passo.link.startsWith("https://")){ const a=document.createElement("a"); a.href=passo.link; a.target="_blank"; a.rel="noopener"; a.textContent="Abrir rascunho no Outlook"; el.appendChild(a); }
+}
+let jszipPronto=null;
+function carregarJsZip(){ if(!jszipPronto) jszipPronto=carregarScript("https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"); return jszipPronto; }
+const nomeArquivo=v=>String(v||"arquivo").replace(/[\\/:*?"<>|\u0000-\u001f]+/g,"_").slice(0,120);
+async function baixarAnexos(lista, base){
+  if(!lista.length) return true;
+  if(!downloads){ toast("O download não está disponível nesta visualização. Abra os arquivos no topo do caso e salve.",true); return false; }
+  try{
+    const pegar=async a=>{ const r=await fetch("/_blob/"+a.id); if(!r.ok) throw {code:"fetch"}; return await r.blob(); };
+    if(lista.length===1 && /\.(pdf|png|jpe?g|webp)$/i.test(lista[0].nome||"")){ await downloads.save({filename:nomeArquivo(lista[0].nome), data:await pegar(lista[0])}); return true; }
+    await carregarJsZip(); const zip=new window.JSZip(); const usados=new Set();
+    for(const a of lista){ let nm=nomeArquivo(a.nome); if(/^text\/plain/.test(a.contentType||"") && !/\.xml$/i.test(nm)) nm+=".xml"; let i=2; const orig=nm; while(usados.has(nm)) nm=orig.replace(/(\.[^.]+)?$/,m=>`_${i++}${m}`); usados.add(nm); zip.file(nm, await pegar(a)); }
+    await downloads.save({filename:nomeArquivo(base)+"_anexos.zip", data:await zip.generateAsync({type:"blob"})}); return true;
+  }catch(e){ const c=e&&e.code; toast(c==="declined"?"Download cancelado. O e-mail será criado mesmo assim; anexe os arquivos pelo topo do caso.":c==="fetch"?"Não consegui baixar um dos anexos. Abra-o pelo topo do caso e salve.":c==="pdf_lib"?"Não consegui preparar o arquivo .zip. Tente de novo.":"O download não foi concluído. Abra os arquivos pelo topo do caso e salve.",true); return false; }
+}
+async function prepararOcorrencia(){
+  if(!etapaLiberada("ocorrencia")||enviando) return;
+  if(!mcp){ toast(MSG_MCP.not_granted,true); return; }
+  const O=lerSecao("ocorrencia"); const to=lerEmails(O.destinatarios);
+  if(!O.numero){ marcarErros("ocorrencia",CAMPOS.ocorrencia.filter(f=>f.k==="numero")); toast("Informe o nº da ocorrência antes de preparar o e-mail.",true); return; }
+  if(!validarDestinos(to,[])){ marcarErros("ocorrencia",CAMPOS.ocorrencia.filter(f=>f.k==="destinatarios")); return; }
+  const c=casos.get(aberto); const lista=anexosEscolhidos("oco");
+  const linhas=textoEmail().split("\n"); const subject=linhas[0].replace(/^Assunto:\s*/,"").slice(0,250);
+  let body=linhas.slice(1).join("\n").replace(/^\n+/,"");
+  if(lista.length) body=body.replace(/\nAtenciosamente,\s*$/, `\nAnexos: ${lista.map(a=>a.nome||rotuloAnexo(a.tipo)).join(", ")}\n\nAtenciosamente,`);
+  const b=$("#rasc-oco"), info=$("#oco-info"); enviando=true; b.disabled=true;
+  try{
+    if(lista.length){ info.className="sub"; info.textContent="Baixando os anexos…"; }
+    const baixou=await baixarAnexos(lista, `${c.codigo||"devolucao"}_ocorrencia`);
+    info.className="sub"; info.textContent="Criando o e-mail no Outlook…";
+    const res=await mcp.callTool(M365,"outlook_create_draft",{to, subject, body, bodyType:"text"});
+    const link=res&&res.payload&&(res.payload.webLink||res.payload.weblink);
+    const passo={link, anexos:lista.length, baixou}; ultimoRascunho[aberto]=Object.assign(ultimoRascunho[aberto]||{}, {oco:passo});
+    mostrarPasso(info, passo);
+    toast('E-mail pronto no Outlook. Depois de enviar, marque "E-mail da ocorrência enviado".');
+    try{ await gravar({ocorrencia:lerSecao("ocorrencia")}, `E-mail da ocorrência ${O.numero} preparado no Outlook para ${to.join(", ")}${lista.length?" com "+lista.length+" anexo(s)":""}`, "ocorrencia", "email"); sujo.ocorrencia=false; }catch(e){ tratarErro(e); }
+  }catch(e){ toast(msgMcp(e),true); info.textContent=""; }
+  finally{ enviando=false; b.disabled=false; }
+}
+async function enviarOcorrencia(){
+  if(!etapaLiberada("ocorrencia")||enviando) return;
+  if(!mcp){ toast(MSG_MCP.not_granted,true); return; }
+  const O=lerSecao("ocorrencia"); const to=lerEmails(O.destinatarios);
+  if(!O.numero){ marcarErros("ocorrencia",CAMPOS.ocorrencia.filter(f=>f.k==="numero")); toast("Informe o nº da ocorrência antes de enviar.",true); return; }
+  if(!validarDestinos(to,[])){ marcarErros("ocorrencia",CAMPOS.ocorrencia.filter(f=>f.k==="destinatarios")); return; }
+  const linhas=textoEmail().split("\n"); const subject=linhas[0].replace(/^Assunto:\s*/,"").slice(0,250); const body=linhas.slice(1).join("\n").replace(/^\n+/,"");
+  const b=$("#enviar-oco"); enviando=true; b.disabled=true; b.textContent="Enviando…";
+  try{
+    await mcp.callTool(M365,"outlook_send_mail",{to, subject, body, bodyType:"text"});
+    const ck=document.getElementById("f-ocorrencia-emailEnviado"); if(ck) ck.checked=true;
+    await gravar({ocorrencia:Object.assign(lerSecao("ocorrencia"),{emailEnviado:true, emailEnviadoEm:agoraISO()})}, `E-mail da ocorrência ${O.numero} enviado pelo Outlook para ${to.join(", ")}`, "ocorrencia", "email");
+    sujo.ocorrencia=false; toast("E-mail da ocorrência enviado.");
+  }catch(e){ toast(msgMcp(e),true); }
+  finally{ enviando=false; b.textContent="Enviar sem anexos"; b.disabled=false; }
+}
+
+/* ---------- E-mail da ocorrência ---------- */
+function textoEmail(){
+  const c=casos.get(aberto)||{};
+  const L=Object.assign({},c.logistica,lerSecao("logistica")), C=Object.assign({},c.comercial,lerSecao("comercial")), O=Object.assign({},c.ocorrencia,lerSecao("ocorrencia"));
+  const v=(x)=>x==null||x===""?"—":x;
+  const linhas=[
+    `Assunto: Ocorrência ${O.numero||"[nº]"} – Devolução NF ${L.nf||"[NF]"} – ${L.cliente||"[cliente]"}`,"",
+    "Prezados,","","Segue abertura de ocorrência referente à devolução abaixo.","",
+    "DEVOLUÇÃO",
+    `Nota fiscal: ${v(L.nf)}${L.serie?" série "+L.serie:""}${L.dataEmissao?" – emitida em "+fmtData(L.dataEmissao):""}`,
+    `Chave de acesso: ${v(L.chave)}`,`Valor total da NF: ${v(fmtMoeda(L.valorNf))}`,
+    `Cliente: ${v(L.cliente)}${L.codCliente?" (cód. "+L.codCliente+")":""}`,`CNPJ/CPF: ${v(L.cnpjCliente)}`,
+    `Endereço: ${v([L.enderecoCliente,L.cidadeUf].filter(Boolean).join(" – "))}`,`Vendedor: ${v(L.vendedor)}`,
+    `Data da devolução: ${v(fmtData(L.dataDevolucao))}`,`Motorista: ${v([L.motorista,L.placa].filter(Boolean).join(" / "))}`,
+    `Motivo: ${v(L.motivo)}`,`Relato do motorista: ${v(L.motivoDetalhe)}`,`Tipo: ${v(L.tipo)}`,`Valor devolvido: ${v(fmtMoeda(L.valor))}`,
+    `Produtos devolvidos:\n${v(L.itens)}`,"",
+    "TRATATIVA COMERCIAL",`Destino da mercadoria: ${v(C.decisao)}`];
+  if(C.decisao===REVENDA){ linhas.push(`Novo cliente: ${v(C.novoCliente)}${C.codNovoCliente?" (cód. "+C.codNovoCliente+")":""}`,`Vendedor da revenda: ${v(C.novoVendedor)}`,`Valor da revenda: ${v(fmtMoeda(C.preco))}`,`Condição de pagamento: ${v(C.condPagamento)}`,`Endereço de entrega: ${v(C.endereco)}`,`Previsão de entrega: ${v(fmtData(C.previsao))}`); }
+  if(C.obs) linhas.push(`Observações: ${C.obs}`);
+  const fotos=Object.values(c.anexos||{}).filter(a=>a&&a.tipo==="foto").length;
+  linhas.push("",`Nº da ocorrência: ${v(O.numero)}`,`Registro no painel: ${c.codigo||""}${fotos?` (${fotos} foto${fotos>1?"s":""} anexada${fotos>1?"s":""} no painel)`:""}`,"","Atenciosamente,");
+  return linhas.join("\n");
+}
+function atualizarEmail(){ const t=$("#email-txt"); if(t) t.value=textoEmail(); atualizarResumo(); }
+async function copiarEmail(){
+  const t=$("#email-txt"); try{ await navigator.clipboard.writeText(t.value); toast("E-mail copiado. Cole no Outlook."); }
+  catch(e){ t.focus(); t.select(); toast("Texto selecionado. Use Ctrl+C para copiar."); }
+}
+async function copiarTabela(){
+  const cols = visao === "fim" ? COLS_FIM : visao === "acomp" ? COLS_ACOMP : COLS_LISTA;
+  const rows = visao === "fim" ? linhasFim() : visao === "acomp" ? linhasAcomp() : linhasLista();
+  const tsv=[cols.map(c=>c[0]).join("\t"), ...rows.map(c=>cols.map(col=>String(col[1](c)||"").replace(/[\t\n\r]+/g," ")).join("\t"))].join("\n");
+  try{ await navigator.clipboard.writeText(tsv); toast(`${rows.length} linhas copiadas. Cole no Excel.`); }catch(e){ toast("Não foi possível copiar neste navegador.",true); }
+}
+
+/* ---------- Avisos de mudanças de outras pessoas ---------- */
+function avisarMudanca(c){
+  const hist=Object.values(c.historico||{}).filter(Boolean).sort((a,b)=>String(b.em).localeCompare(String(a.em)))[0];
+  const coms=Object.values(c.comentarios||{}).filter(Boolean).sort((a,b)=>String(b.em).localeCompare(String(a.em)))[0];
+  let txt, quem;
+  if(coms && (!hist || String(coms.em)>String(hist.em))){ quem=coms.por; txt=`comentou em ${c.codigo}: “${String(coms.texto).slice(0,80)}”`; }
+  else if(hist){ quem=hist.por; txt=`${c.codigo}: ${hist.acao}`; }
+  else return;
+  const span=document.createElement("span"); span.innerHTML=`<b>${pessoa(quem)}</b> `; span.appendChild(document.createTextNode(txt));
+  toast(span); resolverNomes(span);
+}
+
+/* ---------- Painel de Acessos ---------- */
+function abrirAcessos(){
+  if(!meuAcesso.gestor) return toast("Só gestores administram acessos.", true);
+  abrirFicha("__acessos__");
+}
+
+async function pedirAcesso(){
+  if(!db || !meId) return;
+  if(acessos.has(meId)){ toast("Seu pedido já está registrado. Aguarde a liberação.", true); return; }
+  try{
+    await db.doc("acessos/"+meId).set({nome:meNome||"", setores:[], papel:"membro", status:"pendente", em:agoraISO(), por:meId});
+    toast("Pedido enviado. Um gestor libera seu setor na tela Acessos.");
+  }catch(e){ toast("Não consegui registrar o pedido. Peça ao responsável pelo painel.", true); }
+}
+
+async function reivindicarAdmin(){
+  if(!db || !meId || acessos.size) return;
+  const ev={em:agoraISO(), por:meId, acao:"Administração assumida no primeiro acesso", de:[], para:SECOES.slice()};
+  try{
+    await db.doc("acessos/"+meId).set({nome:meNome||"", setores:SECOES.slice(), papel:"dono", status:"ativo", em:ev.em, por:meId, log:{[chave()]:ev}});
+    toast("Você é o administrador do painel. Libere o acesso de cada setor em Acessos.");
+  }catch(e){ tratarErro(e); }
+}
+
+async function salvarAcesso(uid, mudanca, acao){
+  if(!meuAcesso.gestor) return toast("Só gestores alteram acessos.", true);
+  const atual=acessos.get(uid)||{};
+  if(atual.papel==="dono" && mudanca.papel && mudanca.papel!=="dono") return toast("O dono do painel só muda pelo código.", true);
+  const depois=Object.assign({}, atual, mudanca);
+  let gestores=0;
+  for(const [id,d] of acessos.entries()){
+    const p = id===uid ? (depois.papel||"membro") : (d.papel||"membro");
+    if(p==="gestor"||p==="dono") gestores++;
+  }
+  if(!gestores) return toast("O painel precisa de pelo menos um gestor ativo.", true);
+  const ev={em:agoraISO(), por:meId, acao:acao||"Acesso alterado", de:atual.setores||[], para:depois.setores||[]};
+  const ref=db.doc("acessos/"+uid);
+  try{
+    if(acessos.has(uid)) await ref.update(Object.assign({}, mudanca, {em:ev.em, por:meId, log:{[chave()]:ev}}));
+    else await ref.set(Object.assign({}, depois, {em:ev.em, por:meId, log:{[chave()]:ev}}));
+    toast("Acesso atualizado.");
+  }catch(e){ tratarErro(e); }
+}
+
+async function salvarPrazos(){
+  if(!meuAcesso.gestor){ toast("Só gestores alteram prazos.", true); return; }
+  const novos = {};
+  for(const s of SECOES){
+    const el = document.getElementById("pz-" + s);
+    const v = el ? Number(el.value) : 0;
+    novos[s] = isFinite(v) && v > 0 ? v : 0;
+  }
+  try{
+    await db.doc("config/painel").set({prazos:novos, em:agoraISO(), por:meId});
+    for(const s of SECOES) prazos[s] = novos[s];
+    toast("Prazos atualizados.");
+  }catch(e){ tratarErro(e); }
+}
+function montarAcessos(){
+  const todos=[...acessos.entries()].sort((a,b)=>{
+    const pa=(a[1].setores||[]).length?1:0, pb=(b[1].setores||[]).length?1:0;
+    if(pa!==pb) return pa-pb;
+    return String(a[1].nome||"").localeCompare(String(b[1].nome||""));
+  });
+  const pendentes=todos.filter(([,d])=>!(d.setores||[]).length);
+  const ativos=todos.filter(([,d])=>(d.setores||[]).length);
+  const linha=([uid,d])=>{
+    const papel = d.papel==="dono" ? `<span class="pill ok">dono</span>` : d.papel==="gestor" ? `<span class="pill">gestor</span>` : "";
+    const pend = (d.setores||[]).length ? "" : `<span class="pill warn">aguardando liberação</span>`;
+    return `<div class="acx">
+    <div class="l1"><b>${esc(d.nome||"(sem nome)")}</b>
+      <span class="ids mono">${esc(String(uid).slice(0,10))}…</span>
+      ${papel}${pend}
+      <span class="espaco"></span>
+      <span class="pe">${esc(fmtQuando(d.em))}${d.por?" por "+pessoa(d.por):""}</span>
+    </div>
+    <div class="setores">
+      ${SECOES.map(s=>`<label class="chk-mini"><input type="checkbox" data-acao="setor" data-alvo="${esc(uid)}" data-setor="${s}"${(d.setores||[]).includes(s)?" checked":""}> ${ROTULO_SETOR[s]}</label>`).join("")}
+      <label class="chk-mini"><input type="checkbox" data-acao="gestor" data-alvo="${esc(uid)}"${d.papel==="gestor"||d.papel==="dono"?" checked":""}${d.papel==="dono"?" disabled":""}> gestor</label>
+    </div>
+  </div>`;
+  };
+  $("#ficha").innerHTML=`
+  <div class="f-cab"><div class="l1"><div><h2>Acessos</h2>
+    <div class="sub">Cada pessoa só edita o setor liberado abaixo. Seu id: <span class="mono">${esc(meId||"—")}</span></div></div>
+    <button class="fechar" type="button" aria-label="Fechar">×</button></div></div>
+  <div class="f-corpo">
+    <div class="bloco"><h3>Pedidos e equipe</h3>
+      ${pendentes.length?`<div class="grupo">Aguardando liberação</div>${pendentes.map(linha).join("")}`:""}
+      ${ativos.length?`<div class="grupo">Com acesso</div>${ativos.map(linha).join("")}`:""}
+      ${!todos.length?`<div class="vazio">Ninguém abriu o painel ainda.</div>`:""}
+    </div>
+    <div class="bloco"><h3>Liberar alguém pelo id</h3>
+      <div class="anx-botoes"><input type="text" id="acx-uid" placeholder="id do usuário" style="flex:1 1 240px;min-width:0;background:var(--surface-2);border:1px solid var(--line);border-radius:7px;padding:7px 9px">
+      <button class="btn" type="button" id="acx-add">Adicionar</button></div>
+      <div class="aviso-fut">O id de cada pessoa aparece no topo desta tela quando ela abre o painel.</div>
+    </div>
+    <div class="bloco"><h3>Prazo por etapa (dias)</h3>
+      <div class="anx-botoes">
+        ${SECOES.map(s => `<label class="campo-topo" for="pz-${s}">${ET[s].nome}<input type="number" id="pz-${s}" min="0" max="90" step="1" value="${Number(prazos[s]) || 0}" style="width:72px;background:var(--surface-2);border:1px solid var(--line);border-radius:7px;padding:6px 8px"></label>`).join("")}
+        <button class="btn pri" type="button" id="pz-ok">Salvar prazos</button>
+      </div>
+      <div class="aviso-fut">O prazo conta a partir da entrada atual na etapa. Zero desliga o prazo da etapa.</div>
+    </div>
+  </div>`;
+  resolverNomes($("#ficha"));
+  const pz=$("#pz-ok"); if(pz) pz.onclick=salvarPrazos;
+  const add=$("#acx-add");
+  if(add) add.onclick=()=>{
+    const el=$("#acx-uid"); const uid=el?el.value.trim():"";
+    if(!uid) return toast("Informe o id de quem vai receber acesso.", true);
+    if(acessos.has(uid)) return toast("Essa pessoa já tem registro. Ajuste os setores na lista acima.", true);
+    salvarAcesso(uid, {nome:"", setores:[], papel:"membro", status:"pendente"}, "Usuário pré-cadastrado por id");
+  };
+  $("#ficha").onchange=ev=>{
+    const cb=ev.target.closest("input[data-acao]"); if(!cb) return;
+    const uid=cb.dataset.alvo, d=acessos.get(uid)||{};
+    if(cb.dataset.acao==="setor"){
+      const set=new Set(d.setores||[]);
+      if(cb.checked) set.add(cb.dataset.setor); else set.delete(cb.dataset.setor);
+      const lista=[...set];
+      salvarAcesso(uid, {setores:lista, status:lista.length?"ativo":"pendente"}, "Setores de "+(d.nome||uid)+": "+(lista.map(s=>ROTULO_SETOR[s]).join(", ")||"nenhum"));
+    } else {
+      salvarAcesso(uid, {papel:cb.checked?"gestor":"membro"}, (d.nome||uid)+(cb.checked?" agora é gestor":" deixou de ser gestor"));
+    }
+  };
+}
+/* ---------- Eventos de interface ---------- */
+$("#setor").value=setor;
+$("#setor").onchange=e=>{ setor=e.target.value; lsSet("dev-setor",setor); render();
+  if(aberto==="__novo__" && setor!=="logistica"){ sujo={}; fecharFicha(); }
+  else if(aberto && $("#f-cab")) atualizarFicha(false); };
+let buscaTimer=null;
+$("#busca").oninput=e=>{ busca=e.target.value; clearTimeout(buscaTimer); buscaTimer=setTimeout(render, 220); };
+$("#v-quadro").onclick=()=>trocarVisao("quadro");
+$("#v-lista").onclick=()=>trocarVisao("lista");
+$("#v-acomp").onclick=()=>trocarVisao("acomp");
+$("#v-fim").onclick=()=>trocarVisao("fim");
+$("#fim-periodo").onchange=e=>{ periodoFim=Number(e.target.value)||0; if(visao==="fim") renderFinalizados(); };
+$("#f-etapa").onchange=e=>{ filtroEtapa=e.target.value||""; if(visao==="acomp") renderAcompanhamento(); };
+$("#f-sit").onchange=e=>{ filtroSit=e.target.value||"todas"; if(visao==="acomp") renderAcompanhamento(); };
+$("#copiar-tabela").onclick=copiarTabela;
+const abt=$("#acessos-bt"); if(abt) abt.onclick=abrirAcessos;
+$("#novo").onclick=()=>{ if(!db){ toast("Abra o painel pelo claude.ai para registrar casos.",true); return; } if(!podeEscrever){ toast("Seu acesso é só de leitura.",true); return; } abrirFicha("__novo__"); };
+$("#quadro").addEventListener("click",e=>{ const b=e.target.closest(".cartao"); if(b) abrirFicha(b.dataset.id); });
+["#lista","#acomp","#fim"].forEach(sel=>{ const el=$(sel); if(el) el.addEventListener("click",e=>{ const r=e.target.closest("tr[data-id]"); if(r) abrirFicha(r.dataset.id); }); });
+$("#veu").onclick=fecharFicha;
+$("#ficha").addEventListener("click",e=>{ if(e.target.closest(".fechar")) fecharFicha(); });
+document.addEventListener("keydown",e=>{ if(e.key==="Escape" && aberto) fecharFicha(); });
+setInterval(()=>{ if(carregado && !Object.values(sujo||{}).some(Boolean)) render(); }, 60000); // atualiza contagem de dias
+
+/* ---------- Conexão ---------- */
+render();
+(async()=>{
+  if(MODO_DEMO) avisoModoDemo();
+  try{ user=await RT.use("user"); }catch(e){ user=null; }
+  if(user){
+    try{ const me=await user.me(); meId=me.id; meNome=me.name||""; souEditor=!!me.canEdit; $("#eu").textContent="Verificando acesso…"; }catch(e){}
+    try{ const p=await user.can("data.write"); if(p===false){ podeEscrever=false; $("#novo").disabled=true; const fx=$("#faixa"); fx.textContent="Seu acesso a este painel é só de leitura. Para registrar e atualizar casos, peça ao responsável acesso de Colaborador."; fx.classList.add("on"); } }catch(e){}
+  }
+  RT.use("downloads").then(d=>{ downloads=d||null; }).catch(()=>{});
+  RT.use("mcp").then(m=>{ mcp=m||null; if(aberto && $("#f-cab")) atualizarFicha(false); }).catch(()=>{});
+  RT.use("assets").then(a=>{ assets=a||null; if(aberto) renderAnexos(); }).catch(()=>{});
+  RT.use("sample").then(async s=>{ sample=s||null; if(sample){ try{ const lim=await sample.limits(); sampleImgs=!!(lim&&lim.images); }catch(e){} } }).catch(()=>{});
+  try{ db=await RT.use("db"); }catch(e){ db=null; }
+  if(!db){ $("#vivo").className="vivo erro"; $("#vivo-txt").textContent="Sem conexão"; const fx=$("#faixa"); fx.textContent="Não foi possível acessar os dados compartilhados. Abra o painel pelo claude.ai com sua conta da empresa."; fx.classList.add("on"); acessoPronto=true; calcularAcesso(); carregado=true; render(); return; }
+  try{
+    db.collection("acessos").onSnapshot(snap=>{
+      acessos.clear();
+      for(const d of snap.docs){ const v=d.data(); if(v) acessos.set(d.id,v); }
+      acessoPronto=true;
+      calcularAcesso();
+      if(aberto==="__acessos__") montarAcessos();
+      else if(aberto && aberto!=="__novo__" && casos.has(aberto) && $("#f-cab")) atualizarFicha(false);
+    }, ()=>{ acessoPronto=true; calcularAcesso(); });
+  }catch(e){ acessoPronto=true; calcularAcesso(); }
+  try{
+    db.collection("config").onSnapshot(snap=>{
+      const d = snap.docs.filter(x => x.id === "painel")[0];
+      const p = d && d.data() ? d.data().prazos : null;
+      if(p){ for(const s of SECOES){ const n = Number(p[s]); if(isFinite(n)) prazos[s] = n; } }
+      if(carregado) render();
+      if(aberto && $("#f-cab")) atualizarFicha(false);
+    }, ()=>{});
+  }catch(e){}
+  const timer=setTimeout(()=>{ if(!carregado){ $("#vivo").className="vivo erro"; $("#vivo-txt").textContent="Sem resposta"; const fx=$("#faixa"); fx.textContent="Os dados ainda não chegaram. Verifique sua conexão; o painel continua tentando."; fx.classList.add("on"); } },10000);
+  db.collection("casos").onSnapshot(snap=>{
+    const avisos=[];
+    if(!primeiroSnap){ for(const ch of snap.docChanges()){ if(ch.type==="removed") continue; const d=ch.doc.data(); if(d && !ch.doc.metadata.hasPendingWrites && d.atualizadoPor && d.atualizadoPor!==meId) avisos.push(d); } }
+    casos.clear(); for(const d of snap.docs){ const v=d.data(); if(v) casos.set(d.id, normalizarCaso(v)); }
+    if(!snap.metadata.fromCache){ clearTimeout(timer); carregado=true; primeiroSnap=false; $("#vivo").className="vivo on"; $("#vivo-txt").textContent="Ao vivo"; const fx=$("#faixa"); if(fx.textContent.startsWith("Os dados")) fx.classList.remove("on"); }
+    else if(casos.size) carregado=true;
+    render();
+    if(aberto && aberto!=="__novo__" && casos.has(aberto)){ if($("#f-cab")) atualizarFicha(false); else montarFicha(); }
+    avisos.slice(0,3).forEach(avisarMudanca);
+  }, err=>{
+    clearTimeout(timer); carregado=true; $("#vivo").className="vivo erro"; $("#vivo-txt").textContent="Desconectado";
+    const fx=$("#faixa"); fx.textContent = err&&err.code==="revoked" ? "O acesso a este painel mudou. Recarregue a página." : "A conexão com os dados caiu. Recarregue a página para reconectar."; fx.classList.add("on"); render();
+  });
+})();
+</script>
+</body>
+</html>

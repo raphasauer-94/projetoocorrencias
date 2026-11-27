@@ -1,0 +1,14 @@
+{
+  "name": "devolucoes-refaturas",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "db:local": "wrangler d1 execute devolucoes --local --file=./db/schema.sql",
+    "db:remote": "wrangler d1 execute devolucoes --remote --file=./db/schema.sql"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}

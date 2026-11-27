@@ -1,0 +1,17 @@
+name = "devolucoes-refaturas"
+main = "src/index.js"
+compatibility_date = "2025-06-01"
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+
+# Próxima etapa: descomente depois de criar os recursos no Cloudflare
+# [[d1_databases]]
+# binding = "DB"
+# database_name = "devolucoes"
+# database_id = "COLE_AQUI_O_ID"
+#
+# [[r2_buckets]]
+# binding = "ANEXOS"
+# bucket_name = "devolucoes-anexos"
