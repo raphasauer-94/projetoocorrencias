@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Manual do painel de devoluções e refaturas</title>
+<style>
+:root{--ink:#15202c;--muted:#5a6778;--line:#d6dde6;--accent:#1f4fd1;--soft:#eef2f7}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font:10.5pt/1.5 "Segoe UI",system-ui,-apple-system,sans-serif;color:var(--ink)}
+@page{size:A4;margin:16mm 15mm 18mm}
+h2,h3{margin:0}
+h2{font-size:15pt;margin:0 0 8px;padding-bottom:5px;border-bottom:2px solid var(--accent);letter-spacing:.01em}
+h3{font-size:11.5pt;margin:13px 0 4px;color:var(--accent)}
+p{margin:0 0 7px}
+ul{margin:0 0 9px 16px;padding:0}
+li{margin:0 0 3px}
+table{width:100%;border-collapse:collapse;font-size:9.3pt;margin:6px 0 11px}
+th,td{border:1px solid var(--line);padding:5px 7px;text-align:left;vertical-align:top}
+th{background:var(--soft);font-weight:600}
+td.n{white-space:nowrap}
+.pb{page-break-before:always}
+.small{font-size:9pt;color:var(--muted)}
+.cover{height:240mm;display:flex;flex-direction:column;justify-content:center}
+.cover .eyebrow{font-size:10pt;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);font-weight:600}
+.cover h1{font-size:34pt;line-height:1.05;margin:6px 0 10px;letter-spacing:-.01em}
+.cover .sub{font-size:13pt;color:var(--muted);max-width:130mm;line-height:1.4}
+.rule{height:3px;background:var(--accent);width:46mm;margin:18px 0}
+.meta{margin-top:26px;display:grid;grid-template-columns:32mm 1fr;gap:6px 10px;font-size:9.5pt}
+.meta b{color:var(--muted);font-weight:600}
+.foot{margin-top:auto;font-size:8.5pt;color:var(--muted);border-top:1px solid var(--line);padding-top:8px}
+.callout{background:var(--soft);border-left:3px solid var(--accent);padding:8px 11px;margin:8px 0 12px;font-size:9.6pt}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}
+.tag{display:inline-block;font-size:8.5pt;font-weight:600;border:1px solid var(--line);border-radius:9px;padding:0 7px;color:var(--muted)}
+.k{font-weight:600}
+</style>
+</head>
+<body>
+<section class="cover">
+  <div class="eyebrow">Painel de devoluções e refaturas</div>
+  <h1>Manual de funções,<br>permissões e ambientes</h1>
+  <div class="rule"></div>
+  <div class="sub">O que o painel faz, quem pode fazer o quê e onde ele roda — do artefato de origem ao ambiente de teste local e ao destino na Cloudflare.</div>
+  <div class="meta">
+    <b>Versão</b><span>1.0 — novembro de 2026</span>
+    <b>Escopo</b><span>Filial · Logística, Comercial, Ocorrência e Processos</span>
+    <b>Repositório</b><span>devolucoes-refaturas</span>
+    <b>Ambientes</b><span>claude.ai (artefato) · teste local · Cloudflare</span>
+  </div>
+  <div class="foot">Documento de referência da interface. Não substitui o treinamento operacional de cada setor.</div>
+</section>
+<section class="pb">
+<h2>1. Visão geral</h2>
+<p>O painel acompanha uma devolução desde o aviso do motorista até o encerramento da ocorrência e a refatura. Cada caso é um documento com quatro etapas sequenciais e só avança quando o responsável da etapa conclui.</p>
+<div class="grid2">
+<div>
+<h3>O que resolve</h3>
+<ul>
+<li>tira o controle do WhatsApp e da planilha: cada caso tem dono, prazo e histórico;</li>
+<li>mostra exatamente em que etapa cada caso está, sem precisar perguntar;</li>
+<li>guarda a prova: NF, fotos, e-mails e uma trilha de auditoria encadeada.</li>
+</ul>
+</div>
+<div>
+<h3>Como está organizado</h3>
+<ul>
+<li><span class="k">Quadro</span> — operação, uma coluna por etapa;</li>
+<li><span class="k">Acompanhamento</span> — caso a caso, com percurso e prazos;</li>
+<li><span class="k">Finalizados</span> — arquivo das ocorrências concluídas;</li>
+<li><span class="k">Acessos</span> — setores, key users e prazos.</li>
+</ul>
+</div>
+</div>
+<div class="callout">A etapa é do setor; a conclusão é do key user. Quem preenche não decide o andamento — e isso fica registrado com nome, hora e setor.</div>
+</section>
+<section class="pb">
+<h2>2. Funções</h2>
+<h3>2.1 Quadro de devoluções</h3>
+<ul>
+<li>Quatro colunas — Logística, Comercial, Ocorrência e Processos — com o caso sempre ordenado pelo mais antigo na etapa.</li>
+<li>Cada cartão mostra cliente, NF, valor, motivo, tempo na etapa, selo de prazo, retrabalho (↺) e se está aguardando terceiros.</li>
+<li>A coluna do seu setor ganha a etiqueta <span class="tag">Sua fila</span>.</li>
+<li>Casos concluídos saem do quadro e passam a viver em <span class="k">Finalizados</span>.</li>
+</ul>
+<h3>2.2 Ficha do caso</h3>
+<ul>
+<li><span class="k">Andamento</span> no topo: tempo por etapa, status, devoluções e ciclo total, com o prazo da etapa atual.</li>
+<li><span class="k">Nota fiscal e fotos</span>: XML (fonte dos dados), DANFE (consulta e download) e fotos da devolução.</li>
+<li>Quatro seções por setor, cada uma editável apenas na sua etapa.</li>
+<li><span class="k">Conversa do caso</span> e <span class="k">Histórico</span> narrativo ao final, com autor e horário em cada linha.</li>
+<li>Rodapé com criação, última alteração e o selo <span class="tag">Trilha íntegra</span>.</li>
+</ul>
+<h3>2.3 Leitura da nota fiscal</h3>
+<ul>
+<li><span class="k">XML da NF-e</span>: lido no navegador, sem IA e sem custo. Preenche número, série, chave, emissão, cliente, CNPJ, endereço, cidade/UF, valor, itens e duplicatas.</li>
+<li><span class="k">DANFE (PDF ou foto)</span>: apenas arquivado para consulta e download. Não altera campo nenhum.</li>
+<li>Campos preenchidos pelo XML ficam verdes e pendentes de salvar — revisão obrigatória.</li>
+<li>O <span class="k">selo de conferência</span> compara a ficha com o XML (número, série, chave, CNPJ e valor) e avisa quando o nome do DANFE cita outra NF.</li>
+</ul>
+<h3>2.4 Acompanhamento caso a caso</h3>
+<ul>
+<li>Uma linha por caso: etapa atual, desde quando, tempo na etapa e no total, situação e o percurso completo com ✓ e ●.</li>
+<li>Filtros por etapa e por situação (em andamento, aguardando, paradas há 2+ ou 4+ dias, com retrabalho, fora do prazo, vence em 24 h).</li>
+<li>Topo indica o setor com maior tempo médio em etapa e quantos estão fora do prazo — o gargalo do dia.</li>
+<li>Exportação para Excel com o percurso em texto, uma linha por caso.</li>
+</ul>
+<h3>2.5 Finalizados</h3>
+<ul>
+<li>Ao concluir Processos, o caso recebe <span class="k">finalizado</span>, data, autor e o desfecho <span class="tag">Ocorrência concluída</span>.</li>
+<li>Consulta com filtro de período (30, 90, 365 dias ou todos), busca e exportação.</li>
+<li>Reabrir devolve o caso ao fluxo e limpa o marcador de finalizado.</li>
+</ul>
+<h3>2.6 Acessos, key users e prazos</h3>
+<ul>
+<li>Cada pessoa tem setores liberados e um papel: membro, key user ou gestor.</li>
+<li><span class="k">Key user por etapa</span>: uma lista por etapa, permitindo mais de um em Processos.</li>
+<li><span class="k">Prazo por etapa</span> em dias; zero desliga o prazo. O relógio conta da entrada atual na etapa.</li>
+</ul>
+<h3>2.7 E-mails operacionais</h3>
+<ul>
+<li>E-mail da ocorrência com os dados da devolução e da tratativa comercial, pronto para copiar ou abrir no Outlook.</li>
+<li>Resumo final ao encerrar, com seções de andamento, histórico, conversa e anexos.</li>
+<li>No ambiente de teste e no plano inicial da Cloudflare, o envio é por link pronto; o envio direto depende de integração com o Microsoft 365.</li>
+</ul>
+</section>
+<section class="pb">
+<h2>3. Permissões</h2>
+<table>
+<tr><th style="width:46%">Ação</th><th>Membro do setor</th><th>Key user da etapa</th><th>Gestor</th></tr>
+<tr><td>Preencher e salvar a etapa</td><td>sim</td><td>sim</td><td>sim</td></tr>
+<tr><td>Concluir e enviar para a próxima etapa</td><td>não</td><td>sim</td><td>sim</td></tr>
+<tr><td>Devolver para uma etapa anterior</td><td>não</td><td>sim</td><td>sim</td></tr>
+<tr><td>Marcar aguardando terceiros e retomar</td><td>sim</td><td>sim</td><td>sim</td></tr>
+<tr><td>Anexar XML, DANFE e fotos</td><td>Logística, na etapa dela</td><td>sim</td><td>sim</td></tr>
+<tr><td>Criar devolução e salvar na Logística</td><td>Logística</td><td>sim</td><td>sim</td></tr>
+<tr><td>Criar e enviar a devolução ao Comercial</td><td>não</td><td>key user de Logística</td><td>sim</td></tr>
+<tr><td>Reabrir caso finalizado</td><td>não</td><td>não</td><td>sim</td></tr>
+<tr><td>Excluir caso (exclusão lógica)</td><td>não</td><td>não</td><td>sim</td></tr>
+<tr><td>Definir acessos, key users e prazos</td><td>não</td><td>não</td><td>sim</td></tr>
+</table>
+<div class="callout">O bloqueio é verificado na gravação, não apenas na tela. Uma tentativa fora da regra é recusada e registrada na trilha.</div>
+</section>
+<section class="pb">
+<h2>4. Ambientes</h2>
+<table>
+<tr><th style="width:20%">Ambiente</th><th>Para que serve</th><th style="width:19%">Dados</th><th style="width:15%">Anexos</th><th style="width:17%">E-mail e IA</th></tr>
+<tr><td><span class="k">Artefato</span><br><span class="small">claude.ai</span></td><td>uso real hoje, com banco compartilhado e envio pelo Outlook</td><td>base da plataforma</td><td>sim</td><td>sim</td></tr>
+<tr><td><span class="k">Teste local</span><br><span class="small">pasta dev/</span></td><td>validar e estressar o painel sem depender de nuvem</td><td>memória + arquivo</td><td>sim</td><td>não</td></tr>
+<tr><td><span class="k">Cloudflare</span><br><span class="small">próximo passo</span></td><td>produção com domínio próprio, login e regras no servidor</td><td>D1</td><td>R2</td><td>link pronto; IA opcional</td></tr>
+</table>
+<h3>4.1 Teste local</h3>
+<ul>
+<li><span class="k">npm run dev:local</span> sobe o painel em <span class="k">http://127.0.0.1:8799</span> com API em memória.</li>
+<li>Perfis por aba: <span class="mono">?uid=u-gestor</span>, <span class="mono">u-diego</span>, <span class="mono">u-miguel</span>, <span class="mono">u-adilson</span> e <span class="mono">u-ana</span> (preenchimento).</li>
+<li>Massa de teste em <span class="mono">/api/seed?n=100</span>; limpeza em <span class="mono">/api/reset</span>.</li>
+<li>Dados em <span class="mono">dev/.data.json</span> e anexos em <span class="mono">dev/.blobs/</span>, fora do controle de versão.</li>
+</ul>
+<h3>4.2 Cloudflare (planejado)</h3>
+<ul>
+<li>Worker entrega o painel e recebe a API; D1 guarda casos e eventos; R2 guarda anexos; Access faz o login.</li>
+<li>O XML continua sendo lido no navegador, sem custo por leitura.</li>
+<li>Tempo real passa a ser atualização periódica com cache, não conexão persistente.</li>
+</ul>
+<h3>4.3 Limites do plano gratuito</h3>
+<table>
+<tr><th style="width:30%">Recurso</th><th>Limite</th></tr>
+<tr><td>Workers</td><td>100.000 requisições por dia e 10 ms de CPU por chamada</td></tr>
+<tr><td>D1</td><td>5 milhões de linhas lidas e 100 mil escritas por dia; 500 MB por banco</td></tr>
+<tr><td>R2</td><td>10 GB de armazenamento e 1 milhão de operações de escrita por mês</td></tr>
+<tr><td>Access</td><td>até 50 usuários</td></tr>
+</table>
+</section>
+<section class="pb">
+<h2>5. Fluxo operacional</h2>
+<table>
+<tr><th style="width:8%">#</th><th style="width:22%">Etapa</th><th>O que acontece</th><th style="width:22%">Quem conclui</th></tr>
+<tr><td>1</td><td>Logística</td><td>motivo confirmado com o motorista, XML e fotos anexados, valor devolvido</td><td>key user de Logística</td></tr>
+<tr><td>2</td><td>Comercial</td><td>destino da mercadoria: revenda, reentrega ou retorno ao estoque</td><td>key user de Comercial</td></tr>
+<tr><td>3</td><td>Ocorrência</td><td>abertura da ocorrência e envio do e-mail aos destinatários</td><td>key user de Ocorrência</td></tr>
+<tr><td>4</td><td>Processos</td><td>novo pedido, faturamento, boleto e conferência; ao concluir, o caso é finalizado</td><td>key user de Processos</td></tr>
+</table>
+<p class="small">Qualquer etapa pode ser devolvida para uma anterior, com motivo obrigatório. A devolução conta como retrabalho e aparece no cartão, na ficha e no acompanhamento.</p>
+<h2 style="margin-top:18px">6. Pendências e evolução</h2>
+<ul>
+<li><span class="k">API em D1</span> — trocar o dado local pela base compartilhada, com a trilha em tabela consultável.</li>
+<li><span class="k">R2</span> — anexos com limite maior e compressão de imagem no navegador.</li>
+<li><span class="k">Cloudflare Access</span> — login corporativo e setor vindo do cadastro, sem escolha pelo usuário.</li>
+<li><span class="k">E-mail</span> — link pronto no Outlook; envio automático só com integração ao Microsoft 365.</li>
+<li><span class="k">Leitura de PDF por IA</span> — opcional, apenas para os casos em que o XML não existir.</li>
+</ul>
+</section>
+</body>
+</html>

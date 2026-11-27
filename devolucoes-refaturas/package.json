@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "wrangler dev",
+    "dev:local": "node dev/serve.mjs",
     "deploy": "wrangler deploy",
     "db:local": "wrangler d1 execute devolucoes --local --file=./db/schema.sql",
     "db:remote": "wrangler d1 execute devolucoes --remote --file=./db/schema.sql"

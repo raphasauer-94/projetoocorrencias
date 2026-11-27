@@ -21,6 +21,26 @@ npm run dev
 
 Na primeira abertura o painel pede para assumir a administração (só para quem tem permissão de edição); você libera os setores na tela **Acessos** e define os prazos por etapa.
 
+### Ambiente de teste local (sem Cloudflare)
+
+```bash
+npm run dev:local
+# http://127.0.0.1:8799
+```
+
+Sobe um servidor com banco em memória, anexos de verdade e vários usuários ao mesmo tempo — o mesmo painel, sem wrangler.
+
+| Perfil | Endereço |
+|---|---|
+| Gestor | `/?uid=u-gestor` |
+| Key user Logística (Diego) | `/?uid=u-diego` |
+| Key user Comercial (Miguel) | `/?uid=u-miguel` |
+| Key user Ocorrência (Adilson) | `/?uid=u-adilson` |
+| Preenchimento (Ana) | `/?uid=u-ana` |
+
+Gerar massa: `/api/seed?n=100` · limpar casos: `/api/reset`.
+Os dados ficam em `dev/.data.json` e os anexos em `dev/.blobs/` (ambos ignorados pelo git).
+
 ## Publicar no Cloudflare
 
 1. Crie o repositório e faça o push:
